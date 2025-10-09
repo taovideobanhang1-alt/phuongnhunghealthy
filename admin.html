@@ -1,0 +1,50 @@
+<!-- File 3: admin.html (Trang Quản Lý Menu - Thêm/Xóa/Checkbox real-time) -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phương Nhung Healthy Bites - Quản Lý Menu</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Phương Nhung Healthy Bites - Admin</h1>
+    </header>
+    <nav>
+        <a href="index.html">Trang chủ</a>
+        <a href="menu.html">Menu</a>
+        <a href="blog.html">Tin tức</a>
+        <a href="contact.html">Liên hệ</a>
+        <a href="admin.html">Quản lý Menu (Admin)</a>
+    </nav>
+    <section class="section admin-section">
+        <h2>Quản Lý Menu</h2>
+        <form id="add-dish-form">
+            <input type="text" id="dish-name" placeholder="Tên món" required>
+            <input type="text" id="dish-price" placeholder="Giá (VD: 50k)" required>
+            <textarea id="dish-desc" placeholder="Mô tả"></textarea>
+            <input type="text" id="dish-img" placeholder="URL ảnh (VD: https://unsplash.com/...)" required>
+            <button type="submit">Thêm Món</button>
+        </form>
+        <div class="admin-layout">
+            <div class="left">
+                <h3>Danh Sách Món</h3>
+                <ul id="dish-list"></ul>
+            </div>
+            <div class="right">
+                <h3>Món Hôm Nay (Real-time)</h3>
+                <ul id="today-dishes"></ul>
+            </div>
+        </div>
+        <button id="save-menu">Lưu Menu Hôm Nay</button>
+    </section>
+    <footer>
+        <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
+    </footer>
+    <script src="script.js"></script>
+    <script>
+        loadAdmin(); // Load và xử lý admin
+    </script>
+</body>
+</html>
