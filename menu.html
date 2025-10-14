@@ -8,13 +8,12 @@
     <link rel="stylesheet" href="styles.css">
     <style>
         .menu-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        #menu-list { list-style: none; padding: 0; }
-        #menu-list li { background: #e0f7fa; padding: 10px; margin: 5px 0; border-radius: 5px; position: relative; }
-        #menu-list .dish-image { display: none; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); z-index: 10; max-width: 300px; max-height: 300px; object-fit: contain; border: 2px solid #4CAF50; background: white; padding: 5px; }
-        #menu-list li:hover .dish-image, #menu-list li:active .dish-image { display: block; }
-        @media (max-width: 768px) {
-            #menu-list .dish-image { max-width: 200px; max-height: 200px; top: -80px; }
-        }
+        .menu-list h2 { margin-bottom: 5px; }
+        .menu-list p { margin-top: 0; color: #666; }
+        .menu-list ul { list-style: none; padding: 0; }
+        .menu-list ul li { padding: 5px 0; }
+        .menu-list ul h4 { background: #4CAF50; color: white; padding: 5px; margin: 10px 0 5px; }
+        .dish-image { width: 30px; height: 30px; object-fit: cover; margin-left: 10px; }
     </style>
 </head>
 <body>
