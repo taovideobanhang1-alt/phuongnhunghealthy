@@ -7,6 +7,8 @@
     <meta name="robots" content="noindex">
     <title>Phương Nhung Healthy Bites - Admin</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
         .admin-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .admin-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
@@ -55,7 +57,6 @@
             </div>
             <button id="save-menu">Lưu Menu Hôm Nay</button>
             <button id="reset-selection">Xóa Các Món Đã Chọn</button>
-
             <h3>Thêm Món Mới</h3>
             <form id="add-dish-form">
                 <input type="text" id="dish-name" placeholder="Tên món" required>
