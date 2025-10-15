@@ -4,21 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Menu - Phương Nhung Healthy Bites">
+    <meta name="keywords" content="menu healthy, Phương Nhung Healthy Bites, cơm lành mạnh">
     <title>Phương Nhung Healthy Bites - Menu</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         .menu-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
         #menu-list { list-style: none; padding: 0; }
-        #menu-list li { background: #e0f7fa; padding: 10px; margin: 5px 0; border-radius: 5px; position: relative; }
-        #menu-list .dish-image { display: none; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); z-index: 10; max-width: 300px; max-height: 300px; object-fit: contain; border: 2px solid #4CAF50; background: white; padding: 5px; }
-        #menu-list li:hover .dish-image, #menu-list li:active .dish-image { display: block; }
-        #refresh-menu { margin-bottom: 15px; background: #4CAF50; color: white; border: none; padding: 8px 16px; cursor: pointer; }
-        #refresh-menu:hover { background: #45a049; }
+        #menu-list li { 
+            background: #e0f7fa; 
+            padding: 15px; 
+            margin: 8px 0; 
+            border-radius: 8px; 
+            position: relative; 
+            display: flex; 
+            align-items: center; 
+            flex-wrap: wrap; 
+            font-size: 1em;
+        }
+        #menu-list h4 { 
+            width: 100%; 
+            margin: 15px 0 10px; 
+            color: #388E3C; 
+            font-size: 1.3em; 
+            border-bottom: 1px solid #ddd; 
+            padding-bottom: 5px; 
+        }
+        #menu-list .dish-image { 
+            display: none; 
+            position: absolute; 
+            top: -120px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 10; 
+            max-width: 300px; 
+            max-height: 300px; 
+            object-fit: contain; 
+            border: 2px solid #4CAF50; 
+            background: white; 
+            padding: 5px; 
+            border-radius: 8px; 
+        }
+        #menu-list li:hover .dish-image, #menu-list li:active .dish-image { 
+            display: block; 
+        }
+        #qr-code { 
+            margin: 20px 0; 
+            text-align: center; 
+        }
+        #qr-code p { 
+            font-size: 1em; 
+            color: #666; 
+            margin-bottom: 10px; 
+        }
+        #qr-code img { 
+            max-width: 200px; 
+            margin: 10px auto; 
+            border: 1px solid #ddd; 
+            padding: 5px; 
+            background: white; 
+        }
         @media (max-width: 768px) {
-            #menu-list .dish-image { max-width: 200px; max-height: 200px; top: -80px; }
-            #refresh-menu { width: 100%; }
+            #menu-list li { 
+                padding: 12px; 
+                margin: 5px 0; 
+                font-size: 0.9em; 
+            }
+            #menu-list h4 { 
+                font-size: 1.1em; 
+            }
+            #menu-list .dish-image { 
+                max-width: 200px; 
+                max-height: 200px; 
+                top: -100px; 
+            }
+            #qr-code img { 
+                max-width: 150px; 
+            }
+        }
+        @media (max-width: 480px) {
+            #menu-list li { 
+                padding: 10px; 
+                font-size: 0.85em; 
+            }
+            #menu-list .dish-image { 
+                max-width: 150px; 
+                max-height: 150px; 
+                top: -80px; 
+            }
+            #qr-code img { 
+                max-width: 120px; 
+            }
         }
     </style>
 </head>
@@ -34,7 +112,9 @@
         <a href="admin.html">Admin</a>
     </nav>
     <section class="section menu-section">
-        <button id="refresh-menu" onclick="loadTodayMenu()">Tải Menu Mới Nhất</button>
+        <div id="qr-code">
+            <p>Quét mã QR để xem menu mới nhất</p>
+        </div>
         <div id="menu-list"></div>
     </section>
     <footer>
