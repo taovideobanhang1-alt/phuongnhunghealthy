@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- Thư viện QR từ CDN -->
     <style>
         .menu-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
         #menu-list { list-style: none; padding: 0; }
@@ -20,6 +21,10 @@
             #menu-list .dish-image { max-width: 200px; max-height: 200px; top: -80px; }
             #refresh-menu { width: 100%; }
         }
+        #qr-section { text-align: center; margin-top: 20px; }
+        #qr-code { margin: 10px auto; }
+        #download-qr { background: #388E3C; color: white; border: none; padding: 8px 16px; cursor: pointer; }
+        #download-qr:hover { background: #2E7D32; }
     </style>
 </head>
 <body>
@@ -36,6 +41,11 @@
     <section class="section menu-section">
         <button id="refresh-menu" onclick="loadTodayMenu()">Tải Menu Mới Nhất</button>
         <div id="menu-list"></div>
+        <div id="qr-section">
+            <h3>Quét QR để xem Menu</h3>
+            <canvas id="qr-code"></canvas>
+            <button id="download-qr" onclick="downloadQR()">Tải QR Về Máy</button>
+        </div>
     </section>
     <footer>
         <p>Phương Nhung Healthy Bites - 17 Phố Muối, Phường Tam Thanh, Lạng Sơn. Mở cửa: 10h-22h</p>
