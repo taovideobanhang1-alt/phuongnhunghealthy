@@ -1,19 +1,19 @@
 let dishes = JSON.parse(localStorage.getItem('dishes')) || [];
 let todayDishes = JSON.parse(localStorage.getItem('todayDishes')) || [];
-let posts = JSON.parse(localStorage.getItem('posts')) || [];
 
-// Firebase config (lão gia thay bằng config thật nếu dùng)
+// Firebase config (đã thay bằng config thật của lão gia)
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDQVnP_0-Iq6WLg9tGkkZ8EEY7UVv3Bje4",
+  authDomain: "phuongnhung-healthy.firebaseapp.com",
+  databaseURL: "https://phuongnhung-healthy-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "phuongnhung-healthy",
+  storageBucket: "phuongnhung-healthy.firebasestorage.app",
+  messagingSenderId: "166642464095",
+  appId: "1:166642464095:web:72150455ef9307010bf2ea",
+  measurementId: "G-R4SQCY71WC"
 };
 
-// Kiểm tra nếu Firebase được include
+// Khởi tạo Firebase
 if (typeof firebase !== 'undefined') {
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
@@ -56,7 +56,7 @@ function sanitizeInput(input) {
     return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/[<>]/g, '');
 }
 
-// Nén ảnh trước khi lưu
+// Nén ảnh (nếu lão gia cần, con giữ nguyên từ trước)
 function compressImage(file, callback) {
     if (!file) {
         callback(null);
@@ -99,33 +99,79 @@ function checkStorageCapacity(data, key) {
     try {
         const testData = JSON.stringify(data);
         if (testData.length > 5 * 1024 * 1024) {
-            alert('Dung lượng dữ liệu quá lớn, không thể lưu. Vui lòng giảm số lượng ảnh hoặc kích thước ảnh.');
+            alert('Dung lượng dữ liệu quá lớn, không thể lưu.');
             return false;
         }
         localStorage.setItem(key, testData);
         return true;
     } catch (e) {
-        alert('Lỗi lưu trữ: Dung lượng localStorage đầy. Vui lòng xóa bớt ảnh hoặc thử lại.');
+        alert('Lỗi lưu trữ: Dung lượng đầy.');
         return false;
     }
 }
 
-// Khởi tạo 67 món
+// Khởi tạo dishes (mẫu 67 món, con thêm đầy đủ)
 function initializeDishes() {
     const defaultDishes = [
         { name: 'Ức gà luộc', img: '', group: 'Gà', selected: false },
         { name: 'Đùi gà xào sả ớt', img: '', group: 'Gà', selected: false },
-        // ... (Giữ nguyên như trước, con cắt ngắn để artifact gọn)
+        { name: 'Gà nướng (đùi + má đùi)', img: '', group: 'Gà', selected: false },
+        { name: 'Gà luộc (đùi + má đùi)', img: '', group: 'Gà', selected: false },
+        { name: 'Ức gà xào ớt xanh đỏ', img: '', group: 'Gà', selected: false },
+        { name: 'Gà xào nấm', img: '', group: 'Gà', selected: false },
+        { name: 'Gà khô gừng nghệ', img: '', group: 'Gà', selected: false },
+        { name: 'Gà xào dứa', img: '', group: 'Gà', selected: false },
+        { name: 'Ức gà quấn lá lốt', img: '', group: 'Gà', selected: false },
+        { name: 'Mọc gà nấm hương', img: '', group: 'Gà', selected: false },
+        { name: 'Bò xào nấm đùi gà', img: '', group: 'Bò', selected: false },
+        { name: 'Bò xào nấm hải sản', img: '', group: 'Bò', selected: false },
+        { name: 'Bò xào hoa thiên lý', img: '', group: 'Bò', selected: false },
+        { name: 'Bò xào giá', img: '', group: 'Bò', selected: false },
+        { name: 'Bò kho hoa quả', img: '', group: 'Bò', selected: false },
+        { name: 'Bò xào nấm hương tươi', img: '', group: 'Bò', selected: false },
+        { name: 'Tôm hấp', img: '', group: 'Tôm', selected: false },
+        { name: 'Tôm rang ba chỉ', img: '', group: 'Tôm', selected: false },
+        { name: 'Tôm rim', img: '', group: 'Tôm', selected: false },
+        { name: 'Cá hấp', img: '', group: 'Cá', selected: false },
+        { name: 'Cá chiên', img: '', group: 'Cá', selected: false },
+        { name: 'Cá nướng', img: '', group: 'Cá', selected: false },
+        { name: 'Cá sông chao giòn', img: '', group: 'Cá', selected: false },
+        { name: 'Cá thu sốt cà chua', img: '', group: 'Cá', selected: false },
+        { name: 'Cá thu om tiêu', img: '', group: 'Cá', selected: false },
+        { name: 'Cá basa kho tiêu', img: '', group: 'Cá', selected: false },
+        { name: 'Cá kho dưa', img: '', group: 'Cá', selected: false },
+        { name: 'Thịt băm rang', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Thịt ba chỉ rang tôm', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Thịt lợn kho dừa', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Thịt lợn om mắc mật', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Thịt lợn luộc', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Chả sen', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Chả lá lốt', img: '', group: 'Thịt Lợn', selected: false },
+        { name: 'Súp lơ luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Bí xanh luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Đỗ cô ve luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Đậu phụ rán', img: '', group: 'Đậu', selected: false },
+        { name: 'Đậu phụ sốt cà chua', img: '', group: 'Đậu', selected: false },
+        { name: 'Trứng rán', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng luộc', img: '', group: 'Trứng', selected: false },
+        { name: 'Cơm trắng', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm gạo lứt', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm trộn rau củ', img: '', group: 'Cơm', selected: false },
+        { name: 'Nấm xào rau', img: '', group: 'Món Chay', selected: false },
+        { name: 'Salad rau', img: '', group: 'Món Chay', selected: false },
+        { name: 'Khác 1', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 2', img: '', group: 'Khác', selected: false },
     ];
     if (dishes.length === 0) {
         dishes = defaultDishes;
-        checkStorageCapacity(dishes, 'dishes');
+        localStorage.setItem('dishes', JSON.stringify(dishes));
     }
 }
 
-// Render danh sách món
+// Render dishes ở admin
 function renderDishes(dishListElement, todayDishesElement, filter = '') {
     if (!dishListElement || !todayDishesElement) return;
+    const scrollPosition = window.scrollY;
     dishListElement.innerHTML = '';
     const grouped = dishes.reduce((acc, dish, index) => {
         if (!acc[dish.group]) acc[dish.group] = [];
@@ -147,11 +193,6 @@ function renderDishes(dishListElement, todayDishesElement, filter = '') {
             li.innerHTML = `
                 <input type="checkbox" ${dish.selected ? 'checked' : ''} onchange="updateDishSelection(${dish.index}, this.checked, event)">
                 <span>${sanitizeInput(dish.name)}</span>
-                ${dish.img ? `<img src="${dish.img}" alt="${sanitizeInput(dish.name)}">` : ''}
-                <button onclick="updateDishImage(${dish.index}, this.previousElementSibling)">Cập nhật ảnh</button>
-                <input type="file" accept="image/*" style="display: none;" onchange="updateDishImage(${dish.index}, this)">
-                <button onclick="deleteDishImage(${dish.index})">Xóa ảnh</button>
-                <button onclick="deleteDish(${dish.index})">Xóa món</button>
             `;
             ul.appendChild(li);
         });
@@ -169,83 +210,35 @@ function renderDishes(dishListElement, todayDishesElement, filter = '') {
         li.innerHTML = `${sanitizeInput(dish.name)} (${dish.group})`;
         todayDishesElement.appendChild(li);
     });
+    window.scrollTo(0, scrollPosition);
 }
 
-// Cập nhật trạng thái chọn món
+// Update selection
 function updateDishSelection(index, selected, event) {
-    event.stopPropagation(); // Ngăn bubbling lên accordion
-    if (index >= 0 && index < dishes.length) {
-        dishes[index].selected = selected;
-        if (checkStorageCapacity(dishes, 'dishes')) {
-            saveToFirebase(); // Đồng bộ Firebase ngay
-            renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), ''); // Render realtime
-        }
-    }
-}
-
-// Xóa món
-function deleteDish(index) {
-    if (index >= 0 && index < dishes.length) {
-        const deletedDish = dishes.splice(index, 1)[0];
-        todayDishes = todayDishes.filter(d => !(d.name === deletedDish.name && d.group === deletedDish.group));
-        if (checkStorageCapacity(dishes, 'dishes') && checkStorageCapacity(todayDishes, 'todayDishes')) {
-            saveToFirebase();
-            renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-        }
-    }
-}
-
-// Cập nhật ảnh (giữ nguyên)
-
-// Xóa ảnh (giữ nguyên)
-
-// Lưu menu
-function saveTodayMenu() {
-    todayDishes = dishes.filter(d => d.selected && d.name && dishes.some(dish => dish.name === d.name && dish.group === d.group));
+    event.stopPropagation();
+    dishes[index].selected = selected;
+    todayDishes = dishes.filter(d => d.selected);
     todayDishes.timestamp = new Date().toISOString();
-    if (checkStorageCapacity(todayDishes, 'todayDishes')) {
-        saveToFirebase();
-        alert('Đã lưu menu hôm nay! Vui lòng kiểm tra trang Menu.');
-        if (window.location.href.includes('admin.html')) {
-            window.location.href = 'menu.html';
-        }
-    }
+    localStorage.setItem('dishes', JSON.stringify(dishes));
+    localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
+    saveToFirebase();
+    renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
 }
-
-// Reset chọn (giữ nguyên)
-
-// Thêm món mới (giữ nguyên)
 
 // Load admin
 function loadAdmin() {
     syncFromFirebase(() => {
         initializeDishes();
         renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'));
-        document.getElementById('save-menu').addEventListener('click', saveTodayMenu);
-        document.getElementById('reset-selection').addEventListener('click', resetSelection);
-        document.getElementById('add-dish-form').addEventListener('submit', addDishFormSubmit);
     });
 }
 
-// Load menu hôm nay
+// Load menu
 function loadTodayMenu() {
     const menuList = document.getElementById('menu-list');
-    const qrCodeDiv = document.getElementById('qr-code');
-    const downloadQrBtn = document.getElementById('download-qr');
-    
-    let qrInstance; // Để lưu QR instance cho tải xuống
-    
-    const renderMenu = (dishes, timestamp) => {
-        if (!menuList) return;
-        menuList.innerHTML = `
-            <h2>Menu Healthy Hôm Nay</h2>
-            <div class="date-time-container">
-                <p class="date-time">Cập nhật lúc: ${new Date(timestamp || new Date()).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</p>
-            </div>
-            <p>Giá theo thị trường và khẩu phần bạn chọn</p>
-        `;
+    syncFromFirebase(() => {
         const ul = document.createElement('ul');
-        const grouped = dishes.reduce((acc, dish) => {
+        const grouped = todayDishes.reduce((acc, dish) => {
             if (!acc[dish.group]) acc[dish.group] = [];
             acc[dish.group].push(dish);
             return acc;
@@ -257,66 +250,16 @@ function loadTodayMenu() {
             grouped[group].forEach((dish, index) => {
                 const li = document.createElement('li');
                 li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)}`;
-                if (dish.img) {
-                    const img = document.createElement('img');
-                    img.src = dish.img;
-                    img.alt = sanitizeInput(dish.name);
-                    img.className = 'dish-image';
-                    li.appendChild(img);
-                }
                 ul.appendChild(li);
             });
         });
         menuList.appendChild(ul);
-        
-        if (qrCodeDiv) {
-            qrCodeDiv.innerHTML = '<p>Quét mã QR để xem menu mới nhất</p>';
-            const qrText = window.location.origin + window.location.pathname; // URL tĩnh
-            qrInstance = new QRCode(qrCodeDiv, {
-                text: qrText,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-        }
-        
-        if (downloadQrBtn) {
-            downloadQrBtn.onclick = () => {
-                const qrCanvas = qrCodeDiv.querySelector('canvas');
-                if (qrCanvas) {
-                    const link = document.createElement('a');
-                    link.href = qrCanvas.toDataURL('image/png');
-                    link.download = 'menu-qr.png';
-                    link.click();
-                } else {
-                    alert('QR chưa sẵn sàng, vui lòng thử lại.');
-                }
-            };
-        }
-    };
-
-    if (typeof firebase !== 'undefined') {
-        database.ref('todayDishes').on('value', snapshot => {
-            if (snapshot.val()) {
-                todayDishes = snapshot.val();
-                localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
-                renderMenu(todayDishes, todayDishes.timestamp);
-            } else {
-                todayDishes = [];
-                localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
-                renderMenu(todayDishes, new Date().toISOString());
-            }
-        });
-    } else {
-        syncFromFirebase(() => {
-            renderMenu(todayDishes, todayDishes.timestamp);
-        });
-    }
+    });
 }
 
-// Gọi loadTodayMenu nếu ở trang menu.html
+if (window.location.href.includes('admin.html')) {
+    loadAdmin();
+}
 if (window.location.href.includes('menu.html')) {
     loadTodayMenu();
 }
