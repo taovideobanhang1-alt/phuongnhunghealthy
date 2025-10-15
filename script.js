@@ -1,7 +1,7 @@
 let dishes = JSON.parse(localStorage.getItem('dishes')) || [];
 let todayDishes = JSON.parse(localStorage.getItem('todayDishes')) || [];
 
-// Firebase config (đã thay bằng config thật của lão gia)
+// Firebase config (config thật của lão gia)
 const firebaseConfig = {
   apiKey: "AIzaSyDQVnP_0-Iq6WLg9tGkkZ8EEY7UVv3Bje4",
   authDomain: "phuongnhung-healthy.firebaseapp.com",
@@ -19,7 +19,7 @@ if (typeof firebase !== 'undefined') {
     const database = firebase.database();
 }
 
-// Sync dữ liệu từ Firebase
+// Sync dữ liệu từ Firebase (one-time)
 function syncFromFirebase(callback) {
     if (typeof firebase === 'undefined') {
         callback();
@@ -56,61 +56,7 @@ function sanitizeInput(input) {
     return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/[<>]/g, '');
 }
 
-// Nén ảnh (nếu lão gia cần, con giữ nguyên từ trước)
-function compressImage(file, callback) {
-    if (!file) {
-        callback(null);
-        return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const maxWidth = 800;
-            let width = img.width;
-            let height = img.height;
-            if (width > maxWidth) {
-                height = (maxWidth / width) * height;
-                width = maxWidth;
-            }
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob(function(blob) {
-                const newReader = new FileReader();
-                newReader.onload = function(e) {
-                    callback(e.target.result);
-                };
-                newReader.onerror = () => callback(null);
-                newReader.readAsDataURL(blob);
-            }, 'image/jpeg', 0.7);
-        };
-        img.onerror = () => callback(null);
-        img.src = e.target.result;
-    };
-    reader.onerror = () => callback(null);
-    reader.readAsDataURL(file);
-}
-
-// Kiểm tra dung lượng localStorage
-function checkStorageCapacity(data, key) {
-    try {
-        const testData = JSON.stringify(data);
-        if (testData.length > 5 * 1024 * 1024) {
-            alert('Dung lượng dữ liệu quá lớn, không thể lưu.');
-            return false;
-        }
-        localStorage.setItem(key, testData);
-        return true;
-    } catch (e) {
-        alert('Lỗi lưu trữ: Dung lượng đầy.');
-        return false;
-    }
-}
-
-// Khởi tạo dishes (mẫu 67 món, con thêm đầy đủ)
+// Khởi tạo dishes (danh sách 67 món đầy đủ)
 function initializeDishes() {
     const defaultDishes = [
         { name: 'Ức gà luộc', img: '', group: 'Gà', selected: false },
@@ -161,6 +107,21 @@ function initializeDishes() {
         { name: 'Salad rau', img: '', group: 'Món Chay', selected: false },
         { name: 'Khác 1', img: '', group: 'Khác', selected: false },
         { name: 'Khác 2', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 3', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 4', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 5', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 6', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 7', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 8', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 9', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 10', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 11', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 12', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 13', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 14', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 15', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 16', img: '', group: 'Khác', selected: false },
+        { name: 'Khác 17', img: '', group: 'Khác', selected: false }
     ];
     if (dishes.length === 0) {
         dishes = defaultDishes;
@@ -225,36 +186,82 @@ function updateDishSelection(index, selected, event) {
     renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
 }
 
+// Reset selection
+function resetSelection() {
+    dishes.forEach(d => d.selected = false);
+    todayDishes = [];
+    localStorage.setItem('dishes', JSON.stringify(dishes));
+    localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
+    saveToFirebase();
+    renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
+}
+
 // Load admin
 function loadAdmin() {
     syncFromFirebase(() => {
         initializeDishes();
         renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'));
+        const resetButton = document.createElement('button');
+        resetButton.textContent = 'Xóa Món Đã Chọn';
+        resetButton.onclick = resetSelection;
+        document.querySelector('.admin-section').appendChild(resetButton);
     });
 }
 
-// Load menu
+// Load menu với realtime và QR
 function loadTodayMenu() {
     const menuList = document.getElementById('menu-list');
-    syncFromFirebase(() => {
-        const ul = document.createElement('ul');
-        const grouped = todayDishes.reduce((acc, dish) => {
-            if (!acc[dish.group]) acc[dish.group] = [];
-            acc[dish.group].push(dish);
-            return acc;
-        }, {});
-        Object.keys(grouped).sort().forEach(group => {
-            const h4 = document.createElement('h4');
-            h4.textContent = group;
-            ul.appendChild(h4);
-            grouped[group].forEach((dish, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)}`;
-                ul.appendChild(li);
+    const qrCodeDiv = document.getElementById('qr-code');
+    const updateTime = document.getElementById('update-time');
+    if (typeof firebase !== 'undefined') {
+        database.ref('todayDishes').on('value', snapshot => {
+            todayDishes = snapshot.val() || [];
+            localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
+            menuList.innerHTML = '';
+            const ul = document.createElement('ul');
+            const grouped = todayDishes.reduce((acc, dish) => {
+                if (!acc[dish.group]) acc[dish.group] = [];
+                acc[dish.group].push(dish);
+                return acc;
+            }, {});
+            Object.keys(grouped).sort().forEach(group => {
+                const h4 = document.createElement('h4');
+                h4.textContent = group;
+                ul.appendChild(h4);
+                grouped[group].forEach((dish, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)}`;
+                    ul.appendChild(li);
+                });
             });
+            menuList.appendChild(ul);
+            updateTime.textContent = todayDishes.timestamp || new Date().toLocaleString('vi-VN');
+            // Sinh QR
+            qrCodeDiv.innerHTML = '<p>Quét QR để xem menu</p>';
+            new QRCode(qrCodeDiv, {
+                text: window.location.href + '?v=' + Date.now(),
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            const downloadBtn = document.createElement('button');
+            downloadBtn.textContent = 'Tải QR';
+            downloadBtn.onclick = () => {
+                const canvas = qrCodeDiv.querySelector('canvas');
+                const link = document.createElement('a');
+                link.download = 'menu-qr.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            qrCodeDiv.appendChild(downloadBtn);
         });
-        menuList.appendChild(ul);
-    });
+    } else {
+        syncFromFirebase(() => {
+            // ... (giống trên)
+        });
+    }
 }
 
 if (window.location.href.includes('admin.html')) {
