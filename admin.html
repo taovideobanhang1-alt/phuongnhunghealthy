@@ -3,33 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Admin - Phương Nhung Healthy Bites">
-    <meta name="robots" content="noindex">
     <title>Phương Nhung Healthy Bites - Admin</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <style>
-        .admin-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .admin-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .accordion h4 { background: #4CAF50; color: white; padding: 10px; margin: 0; cursor: pointer; transition: background 0.3s; }
-        .accordion h4:hover { background: #45a049; }
-        .accordion-content { padding: 10px; background: #f9f9f9; border: 1px solid #ddd; transition: max-height 0.3s ease-in-out; }
-        .accordion-content.active { display: block; max-height: 500px; overflow-y: auto; }
-        .accordion-content:not(.active) { display: none; max-height: 0; }
-        .accordion-content li { display: flex; align-items: center; gap: 10px; padding: 5px; }
-        .accordion-content li img { width: 30px; height: 30px; object-fit: cover; }
-        #today-dishes { list-style: none; padding: 0; }
-        #today-dishes li { background: #e0f7fa; padding: 5px; margin: 5px 0; border-radius: 5px; }
-        button { background: #4CAF50; color: white; border: none; padding: 8px 16px; cursor: pointer; transition: background 0.3s; }
+        .admin-section { padding: 20px; }
+        .accordion { margin-bottom: 10px; }
+        .accordion h4 { background: #4CAF50; color: white; padding: 10px; margin: 0; cursor: pointer; }
+        .accordion-content { display: none; }
+        .accordion-content.active { display: block; }
+        .accordion-content ul { list-style-type: none; padding: 0; }
+        .accordion-content li { padding: 5px 0; }
+        button { background: #388E3C; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px; }
         button:hover { background: #45a049; }
-        #add-dish-form { margin-top: 20px; padding: 15px; background: #fff; border: 1px solid #ddd; border-radius: 5px; }
-        #add-dish-form input, #add-dish-form select { margin: 5px 0; padding: 5px; }
     </style>
 </head>
 <body>
     <header>
         <h1>Phương Nhung Healthy Bites - Admin</h1>
+        <p>Quản lý menu dễ dàng!</p>
     </header>
     <nav>
         <a href="index.html">Trang chủ</a>
@@ -39,69 +32,15 @@
         <a href="admin.html">Admin</a>
     </nav>
     <section class="section admin-section">
-        <h2>Admin</h2>
-        <div id="auth-section">
-            <input type="password" id="admin-password" placeholder="Nhập mật khẩu admin" required>
-            <button onclick="loginAdmin()">Đăng nhập</button>
-        </div>
-        <div id="admin-content" style="display: none;">
-            <div class="admin-layout">
-                <div class="left">
-                    <h3>Danh Sách Món (Ấn group để xổ ra)</h3>
-                    <div id="dish-list"></div>
-                </div>
-                <div class="right">
-                    <h3>Món Hôm Nay (Real-time)</h3>
-                    <ul id="today-dishes"></ul>
-                </div>
-            </div>
-            <button id="save-menu">Lưu Menu Hôm Nay</button>
-            <button id="reset-selection">Xóa Các Món Đã Chọn</button>
-            <h3>Thêm Món Mới</h3>
-            <form id="add-dish-form">
-                <input type="text" id="dish-name" placeholder="Tên món" required>
-                <input type="file" id="dish-img" accept="image/*">
-                <label for="dish-img">Chọn ảnh từ thư mục (không bắt buộc)</label>
-                <select id="dish-group" required>
-                    <option value="Gà">Gà</option>
-                    <option value="Bò">Bò</option>
-                    <option value="Tôm">Tôm</option>
-                    <option value="Cá">Cá</option>
-                    <option value="Thịt Lợn">Thịt Lợn</option>
-                    <option value="Rau">Rau</option>
-                    <option value="Đậu">Đậu</option>
-                    <option value="Trứng">Trứng</option>
-                    <option value="Cơm">Cơm</option>
-                    <option value="Món Chay">Món Chay</option>
-                    <option value="Khác">Khác</option>
-                </select>
-                <button type="submit">Thêm Món</button>
-            </form>
-        </div>
+        <h2>Chọn Menu Hôm Nay</h2>
+        <div id="dish-list"></div>
+        <h3>Món Đã Chọn</h3>
+        <div id="today-dishes"></div>
     </section>
     <footer>
-        <p>Phương Nhung Healthy Bites - 17 Phố Muối, Phường Tam Thanh, Lạng Sơn. Mở cửa: 10h-22h</p>
         <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
+        <p>Hỗ trợ: 0909-XXX-XXX</p>
     </footer>
     <script src="script.js"></script>
-    <script>
-        function loginAdmin() {
-            const password = document.getElementById('admin-password').value;
-            if (password === '123') {
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                localStorage.setItem('isLoggedIn', 'true');
-                loadAdmin();
-            } else {
-                alert('Mật khẩu sai!');
-            }
-        }
-
-        window.onload = function() {
-            localStorage.removeItem('isLoggedIn');
-            document.getElementById('auth-section').style.display = 'block';
-            document.getElementById('admin-content').style.display = 'none';
-        };
-    </script>
 </body>
 </html>
