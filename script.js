@@ -132,8 +132,8 @@ function initializeDishes() {
 // Render dishes ở admin
 function renderDishes(dishListElement, todayDishesElement, filter = '') {
     if (!dishListElement || !todayDishesElement) return;
-    const scrollPosition = window.scrollY;
-    dishListElement.innerHTML = '';
+    const scrollPosition = dishListElement.scrollTop || window.scrollY;
+    dishListElement.innerHTML = '<ul>';
     const grouped = dishes.reduce((acc, dish, index) => {
         if (!acc[dish.group]) acc[dish.group] = [];
         if (!filter || dish.name.toLowerCase().includes(filter.toLowerCase())) {
@@ -141,36 +141,20 @@ function renderDishes(dishListElement, todayDishesElement, filter = '') {
         }
         return acc;
     }, {});
-    Object.keys(grouped).sort().forEach(group => {
-        const accordion = document.createElement('div');
-        accordion.className = 'accordion';
-        const h4 = document.createElement('h4');
-        h4.textContent = group;
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-        const ul = document.createElement('ul');
+    for (let group in grouped) {
+        dishListElement.innerHTML += `<h3>${group}</h3><ul>`;
         grouped[group].forEach(dish => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <input type="checkbox" ${dish.selected ? 'checked' : ''} onchange="updateDishSelection(${dish.index}, this.checked, event)">
-                <span>${sanitizeInput(dish.name)}</span>
-            `;
-            ul.appendChild(li);
+            dishListElement.innerHTML += `<li><input type="checkbox" ${dish.selected ? 'checked' : ''} onchange="updateDishSelection(${dish.index}, this.checked, event)"> ${sanitizeInput(dish.name)}</li>`;
         });
-        content.appendChild(ul);
-        accordion.appendChild(h4);
-        accordion.appendChild(content);
-        dishListElement.appendChild(accordion);
-        h4.onclick = () => {
-            content.classList.toggle('active');
-        };
-    });
-    todayDishesElement.innerHTML = '';
+        dishListElement.innerHTML += '</ul>';
+    }
+    dishListElement.innerHTML += '</ul>';
+    todayDishesElement.innerHTML = '<ul>';
     todayDishes.forEach(dish => {
-        const li = document.createElement('li');
-        li.innerHTML = `${sanitizeInput(dish.name)} (${dish.group})`;
-        todayDishesElement.appendChild(li);
+        todayDishesElement.innerHTML += `<li>${sanitizeInput(dish.name)} (${dish.group})</li>`;
     });
+    todayDishesElement.innerHTML += '</ul>';
+    dishListElement.scrollTop = scrollPosition;
     window.scrollTo(0, scrollPosition);
 }
 
@@ -212,54 +196,58 @@ function loadAdmin() {
 function loadTodayMenu() {
     const menuList = document.getElementById('menu-list');
     const qrCodeDiv = document.getElementById('qr-code');
-    const updateTime = document.getElementById('update-time');
     if (typeof firebase !== 'undefined') {
         database.ref('todayDishes').on('value', snapshot => {
             todayDishes = snapshot.val() || [];
             localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
-            menuList.innerHTML = '';
-            const ul = document.createElement('ul');
+            menuList.innerHTML = '<ul>';
             const grouped = todayDishes.reduce((acc, dish) => {
                 if (!acc[dish.group]) acc[dish.group] = [];
-                acc[dish.group].push(dish);
+                acc[dish.group].push(dish.name);
                 return acc;
             }, {});
-            Object.keys(grouped).sort().forEach(group => {
-                const h4 = document.createElement('h4');
-                h4.textContent = group;
-                ul.appendChild(h4);
-                grouped[group].forEach((dish, index) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)}`;
-                    ul.appendChild(li);
+            for (let group in grouped) {
+                menuList.innerHTML += `<h3>${group}</h3><ul>`;
+                grouped[group].forEach((name, index) => {
+                    menuList.innerHTML += `<li>${index + 1}. ${sanitizeInput(name)}</li>`;
                 });
-            });
-            menuList.appendChild(ul);
-            updateTime.textContent = todayDishes.timestamp || new Date().toLocaleString('vi-VN');
+                menuList.innerHTML += '</ul>';
+            }
+            menuList.innerHTML += '</ul>';
             // Sinh QR
             qrCodeDiv.innerHTML = '<p>Quét QR để xem menu</p>';
             new QRCode(qrCodeDiv, {
                 text: window.location.href + '?v=' + Date.now(),
-                width: 200,
-                height: 200,
+                width: 128,
+                height: 128,
                 colorDark: '#000000',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.H
             });
-            const downloadBtn = document.createElement('button');
+            const downloadBtn = document.createElement('a');
             downloadBtn.textContent = 'Tải QR';
-            downloadBtn.onclick = () => {
-                const canvas = qrCodeDiv.querySelector('canvas');
-                const link = document.createElement('a');
-                link.download = 'menu-qr.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            };
+            downloadBtn.href = qrCodeDiv.querySelector('canvas').toDataURL('image/png');
+            downloadBtn.download = 'menu-qr.png';
+            downloadBtn.style.display = 'block';
+            downloadBtn.style.marginTop = '10px';
             qrCodeDiv.appendChild(downloadBtn);
         });
     } else {
         syncFromFirebase(() => {
-            // ... (giống trên)
+            menuList.innerHTML = '<ul>';
+            const grouped = todayDishes.reduce((acc, dish) => {
+                if (!acc[dish.group]) acc[dish.group] = [];
+                acc[dish.group].push(dish.name);
+                return acc;
+            }, {});
+            for (let group in grouped) {
+                menuList.innerHTML += `<h3>${group}</h3><ul>`;
+                grouped[group].forEach((name, index) => {
+                    menuList.innerHTML += `<li>${index + 1}. ${sanitizeInput(name)}</li>`;
+                });
+                menuList.innerHTML += '</ul>';
+            }
+            menuList.innerHTML += '</ul>';
         });
     }
 }
