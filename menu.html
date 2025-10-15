@@ -8,37 +8,23 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <style>
-        .menu-section { padding: 20px; }
-        #qr-code { text-align: center; margin-bottom: 20px; }
-        #menu-list ul { list-style-type: none; padding: 0; }
-        #menu-list h4 { background: #4CAF50; color: white; padding: 10px; margin: 0; }
-        #menu-list li { padding: 5px 0; }
-        button { background: #388E3C; color: white; border: none; padding: 10px; cursor: pointer; }
-        button:hover { background: #45a049; }
-    </style>
 </head>
 <body>
     <header>
         <h1>Phương Nhung Healthy Bites - Menu</h1>
-        <p>Thực đơn lành mạnh cập nhật hàng ngày!</p>
     </header>
     <nav>
         <a href="index.html">Trang chủ</a>
         <a href="menu.html">Menu</a>
-        <a href="blog.html">Tin tức</a>
         <a href="contact.html">Liên hệ</a>
         <a href="admin.html">Admin</a>
     </nav>
     <section class="menu-section">
         <div id="qr-code"></div>
-        <h2>Menu Healthy Hôm Nay</h2>
-        <p>Cập nhật lúc: <span id="update-time"></span></p>
         <div id="menu-list"></div>
     </section>
     <footer>
         <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
-        <p>Liên hệ: phuongnhunghealthy@gmail.com</p>
     </footer>
     <script src="script.js"></script>
 </body>
