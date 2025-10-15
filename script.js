@@ -154,8 +154,8 @@ function renderDishes(dishListElement, todayDishesElement, filter = '') {
         todayDishesElement.innerHTML += `<li>${sanitizeInput(dish.name)} (${dish.group})</li>`;
     });
     todayDishesElement.innerHTML += '</ul>';
-    dishListElement.scrollTop = scrollPosition;
-    window.scrollTo(0, scrollPosition);
+    if (dishListElement.scrollTop) dishListElement.scrollTop = scrollPosition;
+    else window.scrollTo(0, scrollPosition);
 }
 
 // Update selection
@@ -185,11 +185,9 @@ function loadAdmin() {
     syncFromFirebase(() => {
         initializeDishes();
         renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'));
-        const resetButton = document.createElement('button');
-        resetButton.textContent = 'Xóa Món Đã Chọn';
-        resetButton.onclick = resetSelection;
-        document.querySelector('.admin-section').appendChild(resetButton);
     });
+    const resetButton = document.querySelector('button');
+    if (resetButton) resetButton.onclick = resetSelection;
 }
 
 // Load menu với realtime và QR
@@ -214,8 +212,7 @@ function loadTodayMenu() {
                 menuList.innerHTML += '</ul>';
             }
             menuList.innerHTML += '</ul>';
-            // Sinh QR
-            qrCodeDiv.innerHTML = '<p>Quét QR để xem menu</p>';
+            qrCodeDiv.innerHTML = '';
             new QRCode(qrCodeDiv, {
                 text: window.location.href + '?v=' + Date.now(),
                 width: 128,
