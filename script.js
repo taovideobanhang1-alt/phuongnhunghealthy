@@ -2,7 +2,7 @@ let dishes = JSON.parse(localStorage.getItem('dishes')) || [];
 let todayDishes = JSON.parse(localStorage.getItem('todayDishes')) || [];
 let posts = JSON.parse(localStorage.getItem('posts')) || [];
 
-// Firebase config (giữ nguyên config thực của lão gia)
+// Firebase config (config thực của lão gia)
 const firebaseConfig = {
   apiKey: "AIzaSyDQVnP_0-Iq6WLg9tGkkZ8EEY7UVv3Bje4",
   authDomain: "phuongnhung-healthy.firebaseapp.com",
@@ -69,7 +69,7 @@ function compressImage(file, callback) {
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const maxWidth = 800; // Giới hạn chiều rộng
+            const maxWidth = 800;
             let width = img.width;
             let height = img.height;
             if (width > maxWidth) {
@@ -86,7 +86,7 @@ function compressImage(file, callback) {
                 };
                 newReader.onerror = () => callback(null);
                 newReader.readAsDataURL(blob);
-            }, 'image/jpeg', 0.7); // Chất lượng 70%
+            }, 'image/jpeg', 0.7);
         };
         img.onerror = () => callback(null);
         img.src = e.target.result;
@@ -99,7 +99,7 @@ function compressImage(file, callback) {
 function checkStorageCapacity(data, key) {
     try {
         const testData = JSON.stringify(data);
-        if (testData.length > 5 * 1024 * 1024) { // 5MB
+        if (testData.length > 5 * 1024 * 1024) {
             alert('Dung lượng dữ liệu quá lớn, không thể lưu. Vui lòng giảm số lượng ảnh hoặc kích thước ảnh.');
             return false;
         }
@@ -186,11 +186,11 @@ function initializeDishes() {
     if (dishes.length === 0) {
         dishes = defaultDishes;
         localStorage.setItem('dishes', JSON.stringify(dishes));
-        saveToFirebase(); // Đồng bộ lên Firebase ngay khi khởi tạo
+        saveToFirebase();
     }
 }
 
-// Render danh sách món (giữ nguyên)
+// Render danh sách món
 function renderDishes(dishListElem, todayDishesElem, searchTerm = '') {
     if (!dishListElem || !todayDishesElem) return;
     dishListElem.innerHTML = '';
@@ -257,7 +257,7 @@ function renderDishes(dishListElem, todayDishesElem, searchTerm = '') {
     });
 }
 
-// Các hàm khác giữ nguyên
+// Toggle chọn món
 function toggleSelect(index) {
     if (index >= 0 && index < dishes.length) {
         dishes[index].selected = !dishes[index].selected;
@@ -268,6 +268,7 @@ function toggleSelect(index) {
     }
 }
 
+// Xóa món
 function deleteDish(index) {
     if (index >= 0 && index < dishes.length) {
         const deletedDish = dishes[index];
@@ -280,6 +281,7 @@ function deleteDish(index) {
     }
 }
 
+// Cập nhật ảnh
 function updateDishImage(index, input) {
     if (index < 0 || index >= dishes.length) {
         console.error(`Lỗi updateDishImage: Chỉ số ${index} không hợp lệ`);
@@ -314,6 +316,7 @@ function updateDishImage(index, input) {
     }
 }
 
+// Xóa ảnh
 function deleteDishImage(index) {
     if (index >= 0 && index < dishes.length) {
         dishes[index].img = '';
@@ -324,6 +327,7 @@ function deleteDishImage(index) {
     }
 }
 
+// Lưu menu hôm nay
 function saveTodayMenu() {
     todayDishes = dishes.filter(d => d.selected && d.name && dishes.some(dish => dish.name === d.name && dish.group === d.group));
     if (checkStorageCapacity(todayDishes, 'todayDishes')) {
@@ -335,6 +339,7 @@ function saveTodayMenu() {
     }
 }
 
+// Reset chọn
 function resetSelection() {
     dishes.forEach(d => d.selected = false);
     todayDishes = [];
@@ -344,6 +349,7 @@ function resetSelection() {
     }
 }
 
+// Thêm món mới
 const addDishFormSubmit = function(e) {
     e.preventDefault();
     const name = sanitizeInput(document.getElementById('dish-name').value);
