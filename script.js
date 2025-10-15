@@ -2,16 +2,15 @@ let dishes = JSON.parse(localStorage.getItem('dishes')) || [];
 let todayDishes = JSON.parse(localStorage.getItem('todayDishes')) || [];
 let posts = JSON.parse(localStorage.getItem('posts')) || [];
 
-// Firebase config (config thực của lão gia)
+// Firebase config (lão gia thay bằng config thật nếu dùng)
 const firebaseConfig = {
-  apiKey: "AIzaSyDQVnP_0-Iq6WLg9tGkkZ8EEY7UVv3Bje4",
-  authDomain: "phuongnhung-healthy.firebaseapp.com",
-  databaseURL: "https://phuongnhung-healthy-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "phuongnhung-healthy",
-  storageBucket: "phuongnhung-healthy.firebasestorage.app",
-  messagingSenderId: "166642464095",
-  appId: "1:166642464095:web:72150455ef9307010bf2ea",
-  measurementId: "G-R4SQCY71WC"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+    projectId: "YOUR_PROJECT",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
 // Kiểm tra nếu Firebase được include
@@ -69,7 +68,7 @@ function compressImage(file, callback) {
         img.onload = function() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const maxWidth = 800;
+            const maxWidth = 800; // Giới hạn chiều rộng
             let width = img.width;
             let height = img.height;
             if (width > maxWidth) {
@@ -86,7 +85,7 @@ function compressImage(file, callback) {
                 };
                 newReader.onerror = () => callback(null);
                 newReader.readAsDataURL(blob);
-            }, 'image/jpeg', 0.7);
+            }, 'image/jpeg', 0.7); // Chất lượng 70%
         };
         img.onerror = () => callback(null);
         img.src = e.target.result;
@@ -99,7 +98,7 @@ function compressImage(file, callback) {
 function checkStorageCapacity(data, key) {
     try {
         const testData = JSON.stringify(data);
-        if (testData.length > 5 * 1024 * 1024) {
+        if (testData.length > 5 * 1024 * 1024) { // 5MB
             alert('Dung lượng dữ liệu quá lớn, không thể lưu. Vui lòng giảm số lượng ảnh hoặc kích thước ảnh.');
             return false;
         }
@@ -111,7 +110,7 @@ function checkStorageCapacity(data, key) {
     }
 }
 
-// Khởi tạo 67 món đầy đủ
+// Khởi tạo 67 món
 function initializeDishes() {
     const defaultDishes = [
         { name: 'Ức gà luộc', img: '', group: 'Gà', selected: false },
@@ -151,110 +150,130 @@ function initializeDishes() {
         { name: 'Súp lơ luộc', img: '', group: 'Rau', selected: false },
         { name: 'Bí xanh luộc', img: '', group: 'Rau', selected: false },
         { name: 'Đỗ cô ve luộc', img: '', group: 'Rau', selected: false },
-        { name: 'Rau cải luộc', img: '', group: 'Rau', selected: false },
-        { name: 'Rau muống xào tỏi', img: '', group: 'Rau', selected: false },
-        { name: 'Rau cải ngọt xào', img: '', group: 'Rau', selected: false },
         { name: 'Bắp cải luộc', img: '', group: 'Rau', selected: false },
-        { name: 'Đậu phụ chiên', img: '', group: 'Đậu', selected: false },
-        { name: 'Đậu phụ sốt cà chua', img: '', group: 'Đậu', selected: false },
-        { name: 'Đậu phụ om nấm', img: '', group: 'Đậu', selected: false },
-        { name: 'Đậu phụ kho nấm', img: '', group: 'Đậu', selected: false },
-        { name: 'Trứng chiên', img: '', group: 'Trứng', selected: false },
-        { name: 'Trứng ốp la', img: '', group: 'Trứng', selected: false },
+        { name: 'Cà rốt luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Củ dền luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Xu hào luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Cải chíp luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Măng xào', img: '', group: 'Rau', selected: false },
+        { name: 'Nấm đùi gà om', img: '', group: 'Rau', selected: false },
+        { name: 'Nấm bao tử', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp đắng xào', img: '', group: 'Rau', selected: false },
+        { name: 'Củ cải xào', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp đắng xào trứng', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp hương luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp hương xào giá đỗ', img: '', group: 'Rau', selected: false },
+        { name: 'Đậu cà chua', img: '', group: 'Đậu', selected: false },
+        { name: 'Đậu tẩm hành', img: '', group: 'Đậu', selected: false },
+        { name: 'Đậu sống', img: '', group: 'Đậu', selected: false },
         { name: 'Trứng luộc', img: '', group: 'Trứng', selected: false },
-        { name: 'Trứng rán cà chua', img: '', group: 'Trứng', selected: false },
-        { name: 'Cơm trắng', img: '', group: 'Cơm', selected: false },
-        { name: 'Cơm gạo lứt', img: '', group: 'Cơm', selected: false },
-        { name: 'Cơm chiên rau củ', img: '', group: 'Cơm', selected: false },
-        { name: 'Nấm xào thập cẩm', img: '', group: 'Món Chay', selected: false },
-        { name: 'Đậu hũ kho nấm rơm', img: '', group: 'Món Chay', selected: false },
-        { name: 'Rau củ luộc thập cẩm', img: '', group: 'Món Chay', selected: false },
-        { name: 'Nấm rơm kho tiêu', img: '', group: 'Món Chay', selected: false },
-        { name: 'Canh rau cải', img: '', group: 'Món Chay', selected: false },
-        { name: 'Canh bí đỏ', img: '', group: 'Món Chay', selected: false },
-        { name: 'Canh nấm kim châm', img: '', group: 'Món Chay', selected: false },
-        { name: 'Canh rong biển', img: '', group: 'Món Chay', selected: false },
-        { name: 'Canh chua chay', img: '', group: 'Món Chay', selected: false },
-        { name: 'Nước ép cà rốt', img: '', group: 'Khác', selected: false },
-        { name: 'Nước ép táo', img: '', group: 'Khác', selected: false },
-        { name: 'Nước ép dứa', img: '', group: 'Khác', selected: false },
-        { name: 'Salad rau trộn', img: '', group: 'Khác', selected: false },
-        { name: 'Salad cá ngừ', img: '', group: 'Khác', selected: false },
-        { name: 'Khoai lang luộc', img: '', group: 'Khác', selected: false },
-        { name: 'Khoai tây chiên', img: '', group: 'Khác', selected: false }
+        { name: 'Trứng rán cuốn rong biển', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng rán hành', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng rán', img: '', group: 'Trứng', selected: false },
+        { name: 'Cơm trắng gạo Nhật', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm lứt tổng hợp', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm lứt + hạt dinh dưỡng', img: '', group: 'Cơm', selected: false },
+        { name: 'Sườn non chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Gà chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Bò chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Tảo xoắn', img: '', group: 'Món Chay', selected: false },
+        { name: 'Lạc rang', img: '', group: 'Món Chay', selected: false },
+        { name: 'Muối vừng', img: '', group: 'Món Chay', selected: false },
+        { name: 'Món khác mẫu', img: '', group: 'Khác', selected: false }
     ];
     if (dishes.length === 0) {
         dishes = defaultDishes;
-        localStorage.setItem('dishes', JSON.stringify(dishes));
-        saveToFirebase();
+        if (checkStorageCapacity(dishes, 'dishes')) {
+            saveToFirebase();
+        }
     }
 }
 
-// Render danh sách món
-function renderDishes(dishListElem, todayDishesElem, searchTerm = '') {
-    if (!dishListElem || !todayDishesElem) return;
-    dishListElem.innerHTML = '';
-    const grouped = dishes.reduce((acc, dish, index) => {
-        if (!acc[dish.group]) acc[dish.group] = [];
-        if (!searchTerm || dish.name.toLowerCase().includes(searchTerm.toLowerCase())) {
-            acc[dish.group].push({ ...dish, index });
+// Hiển thị danh sách với accordion
+function renderDishes(listEl, todayEl, searchQuery = '') {
+    if (!listEl || !todayEl) return;
+    if (dishes.length === 0) {
+        initializeDishes();
+    }
+
+    const openGroups = [];
+    const scrollPositions = {};
+    document.querySelectorAll('.accordion-content.active').forEach(content => {
+        const header = content.previousElementSibling;
+        const groupText = header.textContent.trim();
+        const group = groupText.substring(0, groupText.lastIndexOf(' (')).trim();
+        openGroups.push(group);
+        scrollPositions[group] = content.scrollTop;
+    });
+
+    listEl.innerHTML = '';
+    todayEl.innerHTML = '';
+    const groups = [...new Set(dishes.map(d => d.group))].sort();
+    if (groups.length === 0) {
+        listEl.innerHTML = '<p>Chưa có món nào. Vui lòng thêm món mới.</p>';
+        return;
+    }
+
+    groups.forEach(group => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'accordion';
+        const h4 = document.createElement('h4');
+        h4.innerHTML = `${group} (${dishes.filter(d => d.group === group).length}) <span class="arrow">&#9660;</span>`;
+        h4.onclick = () => toggleAccordion(h4);
+        groupDiv.appendChild(h4);
+
+        const ul = document.createElement('ul');
+        ul.className = 'accordion-content';
+        if (openGroups.includes(group)) {
+            ul.classList.add('active');
+            h4.querySelector('.arrow').innerHTML = '&#9650;';
         }
+
+        dishes.forEach((dish, globalIndex) => {
+            if (dish.group === group) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <input type="checkbox" ${dish.selected ? 'checked' : ''} onchange="toggleSelect(${globalIndex})">
+                    ${sanitizeInput(dish.name)} ${dish.img ? `<img src="${dish.img}" alt="${sanitizeInput(dish.name)}" style="width:30px;height:30px;">` : ''}
+                    <input type="file" id="img-${globalIndex}" accept="image/jpeg,image/png,image/gif" onchange="updateDishImage(${globalIndex}, this)" style="display:none;">
+                    <button onclick="document.getElementById('img-${globalIndex}').click()">Thay Ảnh</button>
+                    <button onclick="deleteDishImage(${globalIndex})">Xóa Ảnh</button>
+                    <button onclick="confirmDeleteDish(${globalIndex})">Xóa Món</button>
+                `;
+                ul.appendChild(li);
+            }
+        });
+        groupDiv.appendChild(ul);
+        listEl.appendChild(groupDiv);
+        if (openGroups.includes(group)) {
+            ul.scrollTop = scrollPositions[group] || 0;
+        }
+    });
+
+    // Update real-time "Món Hôm Nay"
+    const selectedDishes = dishes.filter(d => d.selected && d.name);
+    const groupedSelected = selectedDishes.reduce((acc, dish) => {
+        if (!acc[dish.group]) acc[dish.group] = [];
+        acc[dish.group].push(dish);
         return acc;
     }, {});
-    Object.keys(grouped).sort().forEach(group => {
-        const div = document.createElement('div');
-        div.className = 'accordion';
+    Object.keys(groupedSelected).sort().forEach(group => {
         const h4 = document.createElement('h4');
         h4.textContent = group;
-        h4.onclick = () => {
-            const content = div.querySelector('.accordion-content');
-            content.classList.toggle('active');
-        };
-        const content = document.createElement('div');
-        content.className = 'accordion-content active';
-        const ul = document.createElement('ul');
-        grouped[group].forEach(dish => {
+        todayEl.appendChild(h4);
+        groupedSelected[group].forEach((dish, index) => {
             const li = document.createElement('li');
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = dish.selected;
-            checkbox.onchange = () => toggleSelect(dish.index);
-            li.appendChild(checkbox);
-            if (dish.img) {
-                const img = document.createElement('img');
-                img.src = dish.img;
-                img.alt = sanitizeInput(dish.name);
-                li.appendChild(img);
-            }
-            const span = document.createElement('span');
-            span.textContent = sanitizeInput(dish.name);
-            li.appendChild(span);
-            const imgInput = document.createElement('input');
-            imgInput.type = 'file';
-            imgInput.accept = 'image/*';
-            imgInput.onchange = (e) => updateDishImage(dish.index, e.target);
-            li.appendChild(imgInput);
-            const deleteImgBtn = document.createElement('button');
-            deleteImgBtn.textContent = 'Xóa ảnh';
-            deleteImgBtn.onclick = () => deleteDishImage(dish.index);
-            li.appendChild(deleteImgBtn);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.textContent = 'Xóa món';
-            deleteBtn.onclick = () => deleteDish(dish.index);
-            li.appendChild(deleteBtn);
-            ul.appendChild(li);
+            li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)} ${dish.img ? `<img src="${dish.img}" alt="${sanitizeInput(dish.name)}" style="width:30px;height:30px;">` : ''}`;
+            todayEl.appendChild(li);
         });
-        content.appendChild(ul);
-        div.appendChild(h4);
-        div.appendChild(content);
-        dishListElem.appendChild(div);
     });
-    todayDishesElem.innerHTML = '';
-    todayDishes.forEach((dish, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${index + 1}. ${sanitizeInput(dish.name)} (${dish.group})`;
-        todayDishesElem.appendChild(li);
-    });
+}
+
+// Toggle accordion
+function toggleAccordion(element) {
+    const content = element.nextElementSibling;
+    content.classList.toggle('active');
+    element.querySelector('.arrow').innerHTML = content.classList.contains('active') ? '&#9650;' : '&#9660;';
 }
 
 // Toggle chọn món
@@ -265,12 +284,15 @@ function toggleSelect(index) {
             saveToFirebase();
             renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
         }
+    } else {
+        console.error(`Lỗi toggleSelect: Chỉ số ${index} không hợp lệ`);
+        alert('Lỗi: Không thể chọn món. Vui lòng thử lại.');
     }
 }
 
-// Xóa món
-function deleteDish(index) {
-    if (index >= 0 && index < dishes.length) {
+// Xóa món với confirm
+function confirmDeleteDish(index) {
+    if (index >= 0 && index < dishes.length && confirm('Bạn có chắc muốn xóa món này không?')) {
         const deletedDish = dishes[index];
         dishes.splice(index, 1);
         todayDishes = todayDishes.filter(d => !(d.name === deletedDish.name && d.group === deletedDish.group));
@@ -294,7 +316,7 @@ function updateDishImage(index, input) {
             alert('Vui lòng chọn file ảnh hợp lệ (jpg, png, gif).');
             return;
         }
-        if (file.size > 1 * 1024 * 1024) {
+        if (file.size > 1 * 1024 * 1024) { // Giới hạn 1MB
             alert('File ảnh quá lớn (tối đa 1MB). Vui lòng chọn ảnh nhỏ hơn.');
             return;
         }
@@ -304,7 +326,7 @@ function updateDishImage(index, input) {
                 if (checkStorageCapacity(dishes, 'dishes')) {
                     saveToFirebase();
                     renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-                    input.value = '';
+                    input.value = ''; // Reset input file
                 }
             } else {
                 console.error('Lỗi nén ảnh');
@@ -327,7 +349,7 @@ function deleteDishImage(index) {
     }
 }
 
-// Lưu menu hôm nay
+// Lưu menu
 function saveTodayMenu() {
     todayDishes = dishes.filter(d => d.selected && d.name && dishes.some(dish => dish.name === d.name && dish.group === d.group));
     if (checkStorageCapacity(todayDishes, 'todayDishes')) {
@@ -410,7 +432,7 @@ function loadTodayMenu() {
             menuList.innerHTML = `
                 <h2>Menu Healthy Hôm Nay</h2>
                 <div class="date-time-container">
-                    <p class="date-time">Menu ngày hôm nay: ${new Date().toLocaleDateString('vi-VN')} - Cập nhật lúc: ${new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})} (thời gian thực)</p>
+                    <p class="date-time">Cập nhật lúc: ${new Date().toLocaleDateString('vi-VN')} - ${new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}</p>
                 </div>
                 <p>Giá theo thị trường và khẩu phần bạn chọn</p>
             `;
