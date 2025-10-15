@@ -7,39 +7,24 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <style>
-        .admin-section { padding: 20px; }
-        .accordion { margin-bottom: 10px; }
-        .accordion h4 { background: #4CAF50; color: white; padding: 10px; margin: 0; cursor: pointer; }
-        .accordion-content { display: none; }
-        .accordion-content.active { display: block; }
-        .accordion-content ul { list-style-type: none; padding: 0; }
-        .accordion-content li { padding: 5px 0; }
-        button { background: #388E3C; color: white; border: none; padding: 10px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #45a049; }
-    </style>
 </head>
 <body>
     <header>
         <h1>Phương Nhung Healthy Bites - Admin</h1>
-        <p>Quản lý menu dễ dàng!</p>
     </header>
     <nav>
         <a href="index.html">Trang chủ</a>
         <a href="menu.html">Menu</a>
-        <a href="blog.html">Tin tức</a>
         <a href="contact.html">Liên hệ</a>
         <a href="admin.html">Admin</a>
     </nav>
-    <section class="section admin-section">
-        <h2>Chọn Menu Hôm Nay</h2>
+    <section class="admin-section">
         <div id="dish-list"></div>
-        <h3>Món Đã Chọn</h3>
-        <div id="today-dishes"></div>
+        <button onclick="resetSelection()">Xóa Món Đã Chọn</button>
+        <div id="today-dishes"><h3>Món Hôm Nay</h3><ul></ul></div>
     </section>
     <footer>
         <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
-        <p>Hỗ trợ: 0909-XXX-XXX</p>
     </footer>
     <script src="script.js"></script>
 </body>
