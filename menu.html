@@ -66,6 +66,19 @@
             padding: 5px; 
             background: white; 
         }
+        #download-qr {
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            border-radius: 5px; 
+            font-size: 1em;
+            margin-top: 10px;
+        }
+        #download-qr:hover { 
+            background: #45a049; 
+        }
         @media (max-width: 768px) {
             #menu-list li { 
                 padding: 12px; 
@@ -82,6 +95,10 @@
             }
             #qr-code img { 
                 max-width: 150px; 
+            }
+            #download-qr { 
+                width: 100%; 
+                padding: 12px; 
             }
         }
         @media (max-width: 480px) {
@@ -114,6 +131,7 @@
     <section class="section menu-section">
         <div id="qr-code">
             <p>Quét mã QR để xem menu mới nhất</p>
+            <button id="download-qr">Tải xuống QR</button>
         </div>
         <div id="menu-list"></div>
     </section>
