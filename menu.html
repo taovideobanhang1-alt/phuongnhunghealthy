@@ -1,31 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Menu - Phương Nhung Healthy Bites">
-    <title>Phương Nhung Healthy Bites - Menu</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Menu - Phương Nhung Healthy Bites</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script> <!-- Thư viện QR từ CDN -->
-    <style>
-        .menu-section { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        #menu-list { list-style: none; padding: 0; }
-        #menu-list li { background: #e0f7fa; padding: 10px; margin: 5px 0; border-radius: 5px; position: relative; }
-        #menu-list .dish-image { display: none; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); z-index: 10; max-width: 300px; max-height: 300px; object-fit: contain; border: 2px solid #4CAF50; background: white; padding: 5px; }
-        #menu-list li:hover .dish-image, #menu-list li:active .dish-image { display: block; }
-        #refresh-menu { margin-bottom: 15px; background: #4CAF50; color: white; border: none; padding: 8px 16px; cursor: pointer; }
-        #refresh-menu:hover { background: #45a049; }
-        @media (max-width: 768px) {
-            #menu-list .dish-image { max-width: 200px; max-height: 200px; top: -80px; }
-            #refresh-menu { width: 100%; }
-        }
-        #qr-section { text-align: center; margin-top: 20px; }
-        #qr-code { margin: 10px auto; }
-        #download-qr { background: #388E3C; color: white; border: none; padding: 8px 16px; cursor: pointer; }
-        #download-qr:hover { background: #2E7D32; }
-    </style>
 </head>
 <body>
     <header>
@@ -38,19 +17,76 @@
         <a href="contact.html">Liên hệ</a>
         <a href="admin.html">Admin</a>
     </nav>
+
     <section class="section menu-section">
-        <button id="refresh-menu" onclick="loadTodayMenu()">Tải Menu Mới Nhất</button>
-        <div id="menu-list"></div>
-        <div id="qr-section">
-            <h3>Quét QR để xem Menu</h3>
-            <canvas id="qr-code"></canvas>
-            <button id="download-qr" onclick="downloadQR()">Tải QR Về Máy</button>
+        <div class="menu-header">
+            <h2 id="menu-title">Menu Healthy Hôm Nay</h2>
+            <div class="menu-meta">
+                <div id="menu-datetime" class="datetime">--/--/---- --:--:--</div>
+                <div id="qrcode" aria-hidden="true"></div>
+            </div>
+        </div>
+
+        <div id="menu-list" role="main" aria-live="polite">
+            <p>Đang tải menu...</p>
         </div>
     </section>
+
     <footer>
         <p>Phương Nhung Healthy Bites - 17 Phố Muối, Phường Tam Thanh, Lạng Sơn. Mở cửa: 10h-22h</p>
         <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
     </footer>
+
+    <!-- Firebase (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"></script>
+
+    <!-- QRCode library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
     <script src="script.js"></script>
+    <script>
+        // Initialize menu page: live clock and QR
+        (function() {
+            // realtime clock
+            function updateClock() {
+                const el = document.getElementById('menu-datetime');
+                if (!el) return;
+                const d = new Date();
+                const dd = String(d.getDate()).padStart(2,'0');
+                const mm = String(d.getMonth()+1).padStart(2,'0');
+                const yyyy = d.getFullYear();
+                const hh = String(d.getHours()).padStart(2,'0');
+                const min = String(d.getMinutes()).padStart(2,'0');
+                const ss = String(d.getSeconds()).padStart(2,'0');
+                el.textContent = `${dd}/${mm}/${yyyy} - ${hh}:${min}:${ss}`;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // generate QR for this page (absolute URL)
+            const qEl = document.getElementById('qrcode');
+            if (qEl) {
+                // build URL to menu page
+                const url = window.location.href.split('#')[0];
+                // clear old
+                qEl.innerHTML = '';
+                new QRCode(qEl, {
+                    text: url,
+                    width: 140,
+                    height: 140,
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
+
+            // ask script.js to attach firebase listener for menu
+            if (typeof attachMenuRealtime === 'function') {
+                attachMenuRealtime();
+            } else {
+                // fallback to load from localStorage if no firebase available
+                if (typeof loadTodayMenu === 'function') loadTodayMenu();
+            }
+        })();
+    </script>
 </body>
 </html>

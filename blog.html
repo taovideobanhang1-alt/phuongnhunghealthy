@@ -1,4 +1,3 @@
-<!-- File 4: blog.html (Trang Tin Tức - Thêm/Xóa bài viết) -->
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -24,18 +23,17 @@
         <form id="add-post-form">
             <input type="text" id="post-title" placeholder="Tiêu đề bài viết" required>
             <textarea id="post-content" placeholder="Nội dung bài viết" required></textarea>
-            <input type="text" id="post-img" placeholder="URL ảnh minh họa" required>
+            <input type="text" id="post-img" placeholder="URL ảnh minh họa (tùy chọn)">
             <button type="submit">Thêm Bài Viết</button>
         </form>
-        <div id="blog-posts"></div>
+        <div id="blog-posts" aria-live="polite"></div>
     </section>
     <footer>
         <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
     </footer>
     <script src="script.js"></script>
     <script>
-        loadBlog(); // Load và xử lý blog
+        if (typeof loadBlog === 'function') loadBlog();
     </script>
 </body>
-
 </html>

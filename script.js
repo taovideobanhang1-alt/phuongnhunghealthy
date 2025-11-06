@@ -1,121 +1,56 @@
-let dishes = JSON.parse(localStorage.getItem('dishes')) || [];
-let todayDishes = JSON.parse(localStorage.getItem('todayDishes')) || [];
-let posts = JSON.parse(localStorage.getItem('posts')) || [];
 
-// Firebase config (đã thay bằng config thật của lão gia)
+// script.js - Firebase realtime + local fallback + blog + admin functions
+
+// --- Firebase config (from Lão Gia) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDQVnP_0-Iq6WLg9tGkkZ8EEY7UVv3Bje4",
-  authDomain: "phuongnhung-healthy.firebaseapp.com",
-  databaseURL: "https://phuongnhung-healthy-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "phuongnhung-healthy",
-  storageBucket: "phuongnhung-healthy.firebasestorage.app",
-  messagingSenderId: "166642464095",
-  appId: "1:166642464095:web:72150455ef9307010bf2ea",
-  measurementId: "G-R4SQCY71WC"
+  apiKey: "AIzaSyA6bPO-ozAderQl_WyRDvr1FFtFmOV2whE",
+  authDomain: "phuongnhung-healthy-dd33d.firebaseapp.com",
+  databaseURL: "https://phuongnhung-healthy-dd33d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "phuongnhung-healthy-dd33d",
+  storageBucket: "phuongnhung-healthy-dd33d.firebasestorage.app",
+  messagingSenderId: "311113370048",
+  appId: "1:311113370048:web:3fe2160cf5db11f7e66025",
+  measurementId: "G-WKZ591J0BS"
 };
 
-// Kiểm tra nếu Firebase được include
-if (typeof firebase !== 'undefined') {
+// init firebase (uses firebase-app.js + firebase-database.js loaded in pages that need it)
+let firebaseAvailable = false;
+try {
+  if (window.firebase && firebaseConfig) {
     firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+    firebaseAvailable = true;
+  }
+} catch(e) {
+  console.warn('Firebase init failed:', e);
+  firebaseAvailable = false;
 }
 
-// Sync dữ liệu từ Firebase (sửa thành realtime với .on để đồng bộ máy tính/điện thoại)
-function syncFromFirebase(callback) {
-    if (typeof firebase === 'undefined') {
-        callback();
-        return;
-    }
-    // Listen realtime cho dishes
-    database.ref('dishes').on('value', snapshot => {
-        if (snapshot.val()) {
-            dishes = snapshot.val();
-            localStorage.setItem('dishes', JSON.stringify(dishes));
-            renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-        }
-    });
-    // Listen realtime cho todayDishes
-    database.ref('todayDishes').on('value', snapshot => {
-        if (snapshot.val()) {
-            todayDishes = snapshot.val();
-            localStorage.setItem('todayDishes', JSON.stringify(todayDishes));
-            if (window.location.href.includes('menu.html')) {
-                loadTodayMenu(); // Tự update menu nếu đang ở trang menu
-            }
-            callback();
-        }
-    });
+// Local fallback storage keys
+const LS_DISHES = 'dnh_dishes_v1';
+const LS_TODAY = 'dnh_today_v1';
+const LS_POSTS = 'dnh_posts_v1';
+
+// In-memory
+let dishes = JSON.parse(localStorage.getItem(LS_DISHES)) || [];
+let todayDishes = JSON.parse(localStorage.getItem(LS_TODAY)) || [];
+let posts = JSON.parse(localStorage.getItem(LS_POSTS)) || [];
+
+// sanitize
+function sanitizeInput(input='') {
+  return String(input).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,'').replace(/[<>]/g,'');
 }
 
-// Lưu lên Firebase
-function saveToFirebase() {
-    if (typeof firebase !== 'undefined') {
-        database.ref('dishes').set(dishes);
-        database.ref('todayDishes').set(todayDishes);
-    }
+// normalize group names per Lão Gia's request
+function normalizeGroupName(g) {
+  if (!g) return g;
+  if (g === 'Thịt Lợn') return 'Lợn';
+  if (g === 'Món Chay') return 'Chay';
+  return g;
 }
 
-// Hàm chống XSS
-function sanitizeInput(input) {
-    return input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '').replace(/[<>]/g, '');
-}
-
-// Nén ảnh trước khi lưu
-function compressImage(file, callback) {
-    if (!file) {
-        callback(null);
-        return;
-    }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            const maxWidth = 800; // Giới hạn chiều rộng
-            let width = img.width;
-            let height = img.height;
-            if (width > maxWidth) {
-                height = (maxWidth / width) * height;
-                width = maxWidth;
-            }
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            canvas.toBlob(function(blob) {
-                const newReader = new FileReader();
-                newReader.onload = function(e) {
-                    callback(e.target.result);
-                };
-                newReader.onerror = () => callback(null);
-                newReader.readAsDataURL(blob);
-            }, 'image/jpeg', 0.7); // Chất lượng 70%
-        };
-        img.onerror = () => callback(null);
-        img.src = e.target.result;
-    };
-    reader.onerror = () => callback(null);
-    reader.readAsDataURL(file);
-}
-
-// Kiểm tra dung lượng localStorage
-function checkStorageCapacity(data, key) {
-    try {
-        const testData = JSON.stringify(data);
-        if (testData.length > 5 * 1024 * 1024) { // 5MB
-            alert('Dung lượng dữ liệu quá lớn, không thể lưu. Vui lòng giảm số lượng ảnh hoặc kích thước ảnh.');
-            return false;
-        }
-        localStorage.setItem(key, testData);
-        return true;
-    } catch (e) {
-        alert('Lỗi lưu trữ: Dung lượng localStorage đầy. Vui lòng xóa bớt ảnh hoặc thử lại.');
-        return false;
-    }
-}
-
-// Khởi tạo 67 món
+// --- Initialize default dishes if empty ---
 function initializeDishes() {
+  if (!dishes || dishes.length < 60) {
     const defaultDishes = [
         { name: 'Ức gà luộc', img: '', group: 'Gà', selected: false },
         { name: 'Đùi gà xào sả ớt', img: '', group: 'Gà', selected: false },
@@ -154,282 +89,345 @@ function initializeDishes() {
         { name: 'Súp lơ luộc', img: '', group: 'Rau', selected: false },
         { name: 'Bí xanh luộc', img: '', group: 'Rau', selected: false },
         { name: 'Đỗ cô ve luộc', img: '', group: 'Rau', selected: false },
-        // Thêm các món còn lại nếu cần, con giữ nguyên như cũ để tránh dài
+        { name: 'Bắp cải luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Cà rốt luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Củ dền luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Xu hào luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Cải chíp luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Măng xào', img: '', group: 'Rau', selected: false },
+        { name: 'Nấm đùi gà om', img: '', group: 'Rau', selected: false },
+        { name: 'Nấm bao tử', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp đắng xào', img: '', group: 'Rau', selected: false },
+        { name: 'Củ cải xào', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp đắng xào trứng', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp hương luộc', img: '', group: 'Rau', selected: false },
+        { name: 'Mướp hương xào giá đỗ', img: '', group: 'Rau', selected: false },
+        { name: 'Đậu cà chua', img: '', group: 'Đậu', selected: false },
+        { name: 'Đậu tẩm hành', img: '', group: 'Đậu', selected: false },
+        { name: 'Đậu sống', img: '', group: 'Đậu', selected: false },
+        { name: 'Trứng luộc', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng rán cuốn rong biển', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng rán hành', img: '', group: 'Trứng', selected: false },
+        { name: 'Trứng rán', img: '', group: 'Trứng', selected: false },
+        { name: 'Cơm trắng gạo Nhật', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm lứt tổng hợp', img: '', group: 'Cơm', selected: false },
+        { name: 'Cơm lứt + hạt dinh dưỡng', img: '', group: 'Cơm', selected: false },
+        { name: 'Sườn non chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Gà chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Bò chay', img: '', group: 'Món Chay', selected: false },
+        { name: 'Tảo xoắn', img: '', group: 'Món Chay', selected: false },
+        { name: 'Lạc rang', img: '', group: 'Món Chay', selected: false },
+        { name: 'Muối vừng', img: '', group: 'Món Chay', selected: false },
+        { name: 'Món khác mẫu', img: '', group: 'Khác', selected: false }
     ];
-    if (dishes.length === 0) {
-        dishes = defaultDishes;
-        localStorage.setItem('dishes', JSON.stringify(dishes));
-        saveToFirebase();
-    }
+    dishes = defaultDishes.map(function(d){ return { name: d.name, img: d.img, group: normalizeGroupName(d.group), selected: d.selected }; });
+    localStorage.setItem(LS_DISHES, JSON.stringify(dishes));
+  }
 }
 
-// Render dishes (giữ nguyên như cũ)
-function renderDishes(dishListElem, todayDishesElem, searchTerm = '') {
-    if (!dishListElem) return;
-    dishListElem.innerHTML = '';
-    const grouped = dishes.reduce((acc, dish, index) => {
-        if (!acc[dish.group]) acc[dish.group] = [];
-        acc[dish.group].push({ ...dish, index });
-        return acc;
-    }, {});
-    Object.keys(grouped).sort().forEach(group => {
-        const accordion = document.createElement('div');
-        accordion.className = 'accordion';
-        const h4 = document.createElement('h4');
-        h4.textContent = group;
-        h4.onclick = function() {
-            this.nextElementSibling.classList.toggle('active');
-        };
-        const ul = document.createElement('ul');
-        ul.className = 'accordion-content';
-        grouped[group].filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase())).forEach(dish => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <input type="checkbox" ${dish.selected ? 'checked' : ''} onchange="toggleSelect(${dish.index}, this.checked)">
-                ${sanitizeInput(dish.name)}
-                ${dish.img ? `<img src="${dish.img}" alt="${sanitizeInput(dish.name)}">` : ''}
-                <button onclick="document.getElementById('file-${dish.index}').click()">Sửa Ảnh</button>
-                <input type="file" id="file-${dish.index}" accept="image/*" style="display:none" onchange="updateDishImage(${dish.index}, this)">
-                <button onclick="deleteDishImage(${dish.index})">Xóa Ảnh</button>
-                <button onclick="deleteDish(${dish.index})">Xóa Món</button>
-            `;
-            ul.appendChild(li);
-        });
-        accordion.appendChild(h4);
-        accordion.appendChild(ul);
-        dishListElem.appendChild(accordion);
-    });
-    renderTodayDishes(todayDishesElem);
+// --- Helpers to persist local fallback
+function saveLocalDishes() { localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }
+function saveLocalToday() { localStorage.setItem(LS_TODAY, JSON.stringify(todayDishes)); }
+function saveLocalPosts() { localStorage.setItem(LS_POSTS, JSON.stringify(posts)); }
+
+// --- Firebase helpers ---
+function writeDishesToFirebase() {
+  if (!firebaseAvailable) return;
+  try {
+    firebase.database().ref('/dishes').set(dishes);
+  } catch(e) { console.warn('writeDishesToFirebase', e); }
+}
+function writeTodayToFirebase() {
+  if (!firebaseAvailable) return;
+  try {
+    firebase.database().ref('/todayDishes').set(todayDishes);
+  } catch(e) { console.warn('writeTodayToFirebase', e); }
 }
 
-// Render today dishes (giữ nguyên)
-function renderTodayDishes(elem) {
-    if (!elem) return;
-    elem.innerHTML = '';
-    todayDishes.forEach(dish => {
-        const li = document.createElement('li');
-        li.textContent = `${sanitizeInput(dish.name)} (${dish.group})`;
-        elem.appendChild(li);
-    });
-}
-
-// Toggle select (giữ nguyên)
-function toggleSelect(index, selected) {
-    dishes[index].selected = selected;
-    if (checkStorageCapacity(dishes, 'dishes')) {
-        saveToFirebase();
-        renderTodayDishes(document.getElementById('today-dishes'));
-    }
-}
-
-// Xóa món (giữ nguyên)
-function deleteDish(index) {
-    const deletedDish = dishes[index];
-    dishes.splice(index, 1);
-    todayDishes = todayDishes.filter(d => !(d.name === deletedDish.name && d.group === deletedDish.group));
-    if (checkStorageCapacity(dishes, 'dishes') && checkStorageCapacity(todayDishes, 'todayDishes')) {
-        saveToFirebase();
-        renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-    }
-}
-
-// Cập nhật ảnh (giữ nguyên)
-function updateDishImage(index, input) {
-    if (index < 0 || index >= dishes.length) {
-        console.error(`Lỗi updateDishImage: Chỉ số ${index} không hợp lệ`);
-        alert('Lỗi: Món không tồn tại.');
-        return;
-    }
-    const file = input.files[0];
-    if (file) {
-        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-            alert('Vui lòng chọn file ảnh hợp lệ (jpg, png, gif).');
-            return;
-        }
-        if (file.size > 1 * 1024 * 1024) { // Giới hạn 1MB
-            alert('File ảnh quá lớn (tối đa 1MB). Vui lòng chọn ảnh nhỏ hơn.');
-            return;
-        }
-        compressImage(file, function(compressedData) {
-            if (compressedData) {
-                dishes[index].img = compressedData;
-                if (checkStorageCapacity(dishes, 'dishes')) {
-                    saveToFirebase();
-                    renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-                    input.value = ''; // Reset input file
-                }
-            } else {
-                console.error('Lỗi nén ảnh');
-                alert('Lỗi: Không thể nén ảnh. Vui lòng thử file khác.');
-            }
-        });
-    } else {
-        alert('Vui lòng chọn một file ảnh.');
-    }
-}
-
-// Xóa ảnh (giữ nguyên)
-function deleteDishImage(index) {
-    if (index >= 0 && index < dishes.length) {
-        dishes[index].img = '';
-        if (checkStorageCapacity(dishes, 'dishes')) {
-            saveToFirebase();
-            renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-        }
-    }
-}
-
-// Lưu menu (giữ nguyên)
-function saveTodayMenu() {
-    todayDishes = dishes.filter(d => d.selected && d.name && dishes.some(dish => dish.name === d.name && dish.group === d.group));
-    if (checkStorageCapacity(todayDishes, 'todayDishes')) {
-        saveToFirebase();
-        alert('Đã lưu menu hôm nay! Vui lòng kiểm tra trang Menu.');
-        if (window.location.href.includes('admin.html')) {
-            window.location.href = 'menu.html';
-        }
-    }
-}
-
-// Reset chọn (giữ nguyên)
-function resetSelection() {
-    dishes.forEach(d => d.selected = false);
-    todayDishes = [];
-    if (checkStorageCapacity(dishes, 'dishes') && checkStorageCapacity(todayDishes, 'todayDishes')) {
-        saveToFirebase();
-        renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-    }
-}
-
-// Thêm món mới (giữ nguyên)
-const addDishFormSubmit = function(e) {
-    e.preventDefault();
-    const name = sanitizeInput(document.getElementById('dish-name').value);
-    const group = document.getElementById('dish-group').value;
-    const file = document.getElementById('dish-img').files[0];
-    if (!name.trim()) {
-        alert('Vui lòng nhập tên món.');
-        return;
-    }
-    let img = '';
-    const addDish = () => {
-        dishes.push({ name, img, group, selected: false });
-        if (checkStorageCapacity(dishes, 'dishes')) {
-            saveToFirebase();
-            renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'), '');
-            this.reset();
-        }
-    };
-    if (file) {
-        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-            alert('Vui lòng chọn file ảnh hợp lệ (jpg, png, gif).');
-            return;
-        }
-        if (file.size > 1 * 1024 * 1024) {
-            alert('File ảnh quá lớn (tối đa 1MB). Vui lòng chọn ảnh nhỏ hơn.');
-            return;
-        }
-        compressImage(file, function(compressedData) {
-            if (compressedData) {
-                img = compressedData;
-                addDish();
-            } else {
-                console.error('Lỗi nén ảnh khi thêm món');
-                alert('Lỗi: Không thể nén ảnh mới. Vui lòng thử lại.');
-            }
-        });
-    } else {
-        addDish();
-    }
-};
-
-// Load admin (sửa để sync realtime)
-function loadAdmin() {
-    syncFromFirebase(() => {
-        initializeDishes();
-        renderDishes(document.getElementById('dish-list'), document.getElementById('today-dishes'));
-        document.getElementById('save-menu').addEventListener('click', saveTodayMenu);
-        document.getElementById('reset-selection').addEventListener('click', resetSelection);
-        document.getElementById('add-dish-form').addEventListener('submit', addDishFormSubmit);
-    });
-}
-
-// Load menu hôm nay (sửa để sync realtime)
-function loadTodayMenu() {
-    syncFromFirebase(() => {
-        const menuList = document.getElementById('menu-list');
-        if (menuList) {
-            menuList.innerHTML = `
-                <h2>Menu Healthy Hôm Nay</h2>
-                <div class="date-time-container">
-                    <p class="date-time">Cập nhật lúc: ${new Date().toLocaleDateString('vi-VN')} - ${new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute: '2-digit'})}</p>
-                </div>
-                <p>Giá theo thị trường và khẩu phần bạn chọn</p>
-            `;
-            const ul = document.createElement('ul');
-            const grouped = todayDishes.reduce((acc, dish) => {
-                if (!acc[dish.group]) acc[dish.group] = [];
-                acc[dish.group].push(dish);
-                return acc;
-            }, {});
-            Object.keys(grouped).sort().forEach(group => {
-                const h4 = document.createElement('h4');
-                h4.textContent = group;
-                ul.appendChild(h4);
-                grouped[group].forEach((dish, index) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `${index + 1}. ${sanitizeInput(dish.name)}`;
-                    if (dish.img) {
-                        const img = document.createElement('img');
-                        img.src = dish.img;
-                        img.alt = sanitizeInput(dish.name);
-                        img.className = 'dish-image';
-                        li.appendChild(img);
-                    }
-                    ul.appendChild(li);
-                });
-            });
-            menuList.appendChild(ul);
-        }
-    });
-}
-
-// Gọi loadTodayMenu nếu ở trang menu.html
-if (window.location.href.includes('menu.html')) {
+// --- Read realtime listeners (menu page will call attachMenuRealtime) ---
+function attachMenuRealtime() {
+  if (!firebaseAvailable) {
+    console.warn('Firebase not available');
+    // fallback to local storage rendering
     loadTodayMenu();
+    return;
+  }
+  // listen dishes and todayDishes
+  firebase.database().ref('/dishes').on('value', function(snapshot) {
+    var val = snapshot.val();
+    if (val) {
+      dishes = val;
+      saveLocalDishes();
+    }
+  });
+  firebase.database().ref('/todayDishes').on('value', function(snapshot) {
+    var val = snapshot.val();
+    if (val) {
+      todayDishes = val;
+      saveLocalToday();
+      // if on menu page, render
+      if (typeof renderTodayIntoMenu === 'function') renderTodayIntoMenu();
+      else if (typeof loadTodayMenu === 'function') loadTodayMenu();
+    }
+  });
 }
 
-// Load blog nếu ở blog.html (giữ nguyên, con không sửa vì không liên quan)
+// --- Rendering for menu (menu.html) ---
+function renderTodayIntoMenu() {
+  var menuList = document.getElementById('menu-list');
+  if (!menuList) return;
+  menuList.innerHTML = '<h2>Menu Healthy Hôm Nay</h2><p>Giá theo thị trường và khẩu phần bạn chọn</p>';
+  var ul = document.createElement('ul');
+  var grouped = (todayDishes || []).reduce(function(acc, dish) {
+    var grp = normalizeGroupName(dish.group || dish.group);
+    if (!acc[grp]) acc[grp] = [];
+    acc[grp].push(dish);
+    return acc;
+  }, {});
+  Object.keys(grouped).sort(function(a,b){ return a.localeCompare(b,'vi'); }).forEach(function(group) {
+    var h4 = document.createElement('h4'); h4.textContent = group; ul.appendChild(h4);
+    grouped[group].forEach(function(dish, index) {
+      var li = document.createElement('li');
+      li.innerHTML = (index + 1) + '. ' + sanitizeInput(dish.name);
+      if (dish.img) {
+        var img = document.createElement('img');
+        img.src = dish.img;
+        img.alt = sanitizeInput(dish.name);
+        img.className = 'dish-image';
+        li.appendChild(img);
+      }
+      ul.appendChild(li);
+    });
+  });
+  menuList.appendChild(ul);
+}
+
+// Legacy local load (fallback)
+function loadTodayMenu() {
+  todayDishes = JSON.parse(localStorage.getItem(LS_TODAY)) || todayDishes || [];
+  renderTodayIntoMenu();
+}
+
+// --- Admin rendering and interaction ---
+function renderDishesAdmin(searchQuery) {
+  if (!searchQuery) searchQuery = '';
+  var listEl = document.getElementById('dish-list');
+  var todayEl = document.getElementById('today-dishes');
+  if (!listEl || !todayEl) return;
+  // collect open groups
+  var open = [];
+  document.querySelectorAll('.accordion-content.active').forEach(function(c){ var h = c.previousElementSibling; if (h) open.push(h.dataset.group); });
+
+  listEl.innerHTML = '';
+  todayEl.innerHTML = '';
+  var groups = Array.from(new Set(dishes.map(function(d){ return normalizeGroupName(d.group); }))).sort(function(a,b){ return a.localeCompare(b,'vi'); });
+  groups.forEach(function(group) {
+    var groupDishes = dishes.filter(function(d){ return normalizeGroupName(d.group) === group && d.name.toLowerCase().includes(searchQuery.toLowerCase()); });
+    if (groupDishes.length===0) return;
+    var div = document.createElement('div'); div.className='accordion';
+    var h4 = document.createElement('h4'); h4.dataset.group = group; h4.onclick = function(){ toggleAccordion(this); };
+    h4.innerHTML = sanitizeInput(group) + ' (' + groupDishes.length + ' món) <span class="arrow">&#9660;</span>';
+    var ul = document.createElement('ul'); ul.className='accordion-content';
+    if (open.indexOf(group) !== -1) { ul.classList.add('active'); h4.querySelector('.arrow').innerHTML='&#9650;'; }
+    groupDishes.forEach(function(dish) {
+      var idx = dishes.findIndex(function(x){ return x.name === dish.name && normalizeGroupName(x.group) === group; });
+      if (idx === -1) return;
+      var li = document.createElement('li');
+      var cb = document.createElement('input'); cb.type='checkbox'; cb.checked=!!dishes[idx].selected; cb.onchange=function(){ toggleSelect(idx); };
+      var spanName = document.createElement('span'); spanName.innerHTML = sanitizeInput(dish.name);
+      var imgWrap = document.createElement('span');
+      if (dish.img) { var im = document.createElement('img'); im.src=dish.img; im.alt=sanitizeInput(dish.name); im.style.width='30px'; im.style.height='30px'; im.style.objectFit='cover'; imgWrap.appendChild(im); }
+      else { imgWrap.textContent=' Chưa có ảnh'; }
+      var fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none'; fileInput.id = 'img-'+idx;
+      fileInput.onchange = function(){ updateDishImage(idx, this); };
+      var btnChange = document.createElement('button'); btnChange.type='button'; btnChange.className='btn-green'; btnChange.textContent='Thay Ảnh'; btnChange.onclick=function(){ document.getElementById('img-'+idx).click(); };
+      var btnDelImg = document.createElement('button'); btnDelImg.type='button'; btnDelImg.className='btn-green'; btnDelImg.textContent='Xóa Ảnh'; btnDelImg.onclick=function(){ deleteDishImage(idx); };
+      var btnDel = document.createElement('button'); btnDel.type='button'; btnDel.className='btn-danger'; btnDel.textContent='Xóa Món'; btnDel.onclick=function(){ confirmDeleteDish(idx); };
+      li.appendChild(cb); li.appendChild(spanName); li.appendChild(imgWrap); li.appendChild(fileInput); li.appendChild(btnChange); li.appendChild(btnDelImg); li.appendChild(btnDel);
+      ul.appendChild(li);
+    });
+    div.appendChild(h4); div.appendChild(ul); listEl.appendChild(div);
+  });
+
+  // real-time today list
+  var selected = dishes.filter(function(d){ return d.selected; });
+  var grouped = selected.reduce(function(acc,d){ var g = normalizeGroupName(d.group); if (!acc[g]) acc[g]=[]; acc[g].push(d); return acc; }, {});
+  Object.keys(grouped).sort(function(a,b){ return a.localeCompare(b,'vi'); }).forEach(function(group){
+    var h4 = document.createElement('h4'); h4.textContent = group; todayEl.appendChild(h4);
+    grouped[group].forEach(function(dish,i){ var li=document.createElement('li'); li.innerHTML = (i+1) + '. ' + sanitizeInput(dish.name) + (dish.img?('<img src="'+dish.img+'" style="width:30px;height:30px;">'):''); todayEl.appendChild(li); });
+  });
+}
+
+// Toggle accordion
+function toggleAccordion(el) {
+  var c = el.nextElementSibling;
+  if (!c) return;
+  c.classList.toggle('active');
+  var arrow = el.querySelector('.arrow');
+  if (arrow) arrow.innerHTML = c.classList.contains('active') ? '\u25B2' : '\u25BC';
+}
+
+// Toggle select
+function toggleSelect(index) {
+  if (!dishes[index]) return;
+  dishes[index].selected = !dishes[index].selected;
+  saveLocalDishes();
+  // update firebase too
+  writeDishesToFirebase();
+}
+
+// delete dish confirm
+function confirmDeleteDish(index) {
+  if (!Number.isInteger(index) || !dishes[index]) return;
+  if (confirm('Bạn có chắc muốn xóa món này không?')) {
+    dishes.splice(index,1);
+    saveLocalDishes();
+    writeDishesToFirebase();
+    renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
+  }
+}
+
+// update image via FileReader
+function updateDishImage(index, input) {
+  var file = input.files[0];
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      if (dishes[index]) {
+        dishes[index].img = e.target.result;
+        saveLocalDishes();
+        writeDishesToFirebase();
+        renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+// delete image
+function deleteDishImage(index) {
+  if (dishes[index]) {
+    dishes[index].img = '';
+    saveLocalDishes();
+    writeDishesToFirebase();
+    renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
+  }
+}
+
+// save today menu (writes both local and firebase)
+function saveTodayMenu() {
+  todayDishes = dishes.filter(function(d){ return d.selected; });
+  saveLocalToday();
+  writeTodayToFirebase();
+  writeDishesToFirebase();
+  alert('Đã lưu menu hôm nay! Mọi thiết bị sẽ cập nhật trong giây lát.');
+}
+
+// reset selection
+function resetSelection() {
+  dishes.forEach(function(d){ d.selected=false; });
+  saveLocalDishes();
+  writeDishesToFirebase();
+  renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
+}
+
+// add dish form
+function addDishFormSubmit(e) {
+  e.preventDefault();
+  var form = document.getElementById('add-dish-form');
+  var name = sanitizeInput(document.getElementById('dish-name').value || '');
+  var groupRaw = document.getElementById('dish-group') ? document.getElementById('dish-group').value : 'Khác';
+  var group = normalizeGroupName(groupRaw);
+  var file = document.getElementById('dish-img') && document.getElementById('dish-img').files ? document.getElementById('dish-img').files[0] : null;
+  if (!name) { alert('Vui lòng nhập tên món.'); return; }
+  var add = function(img){ dishes.push({name: name, img: img, group: group, selected:false}); saveLocalDishes(); writeDishesToFirebase(); renderDishesAdmin(''); form.reset(); };
+  if (file) {
+    var reader = new FileReader();
+    reader.onload = function(e){ add(e.target.result); };
+    reader.readAsDataURL(file);
+  } else add('');
+}
+
+// load admin (attach UI)
+function loadAdmin() {
+  initializeDishes();
+  renderDishesAdmin('');
+  var saveBtn = document.getElementById('save-menu');
+  var resetBtn = document.getElementById('reset-selection');
+  var addForm = document.getElementById('add-dish-form');
+  if (saveBtn) saveBtn.addEventListener('click', saveTodayMenu);
+  if (resetBtn) resetBtn.addEventListener('click', resetSelection);
+  if (addForm) addForm.addEventListener('submit', addDishFormSubmit);
+  var search = document.getElementById('search-dish');
+  if (search) search.addEventListener('input', function(){ renderDishesAdmin(search.value); });
+  // attach firebase listeners to keep local in sync
+  if (firebaseAvailable) {
+    firebase.database().ref('/dishes').on('value', function(snap){ var val = snap.val(); if (val) { dishes = val; saveLocalDishes(); renderDishesAdmin(search?search.value:''); } });
+    firebase.database().ref('/todayDishes').on('value', function(snap){ var val = snap.val(); if (val) { todayDishes = val; saveLocalToday(); renderDishesAdmin(search?search.value:''); } });
+  }
+}
+
+// --- Blog functions (localStorage) ---
 function loadBlog() {
-    // Code blog nếu có, nhưng hiện tại file blog.html có form, con giữ nguyên
+  posts = JSON.parse(localStorage.getItem(LS_POSTS)) || [];
+  var container = document.getElementById('blog-posts');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = posts.length - 1; i >= 0; i--) {
+    var p = posts[i];
+    var div = document.createElement('div'); div.className='blog-post';
+    var html = '<h3>' + sanitizeInput(p.title) + '</h3><p>' + sanitizeInput(p.content) + '</p>';
+    if (p.img) html += '<p><img src="' + sanitizeInput(p.img) + '" alt=""></p>';
+    html += '<p><button onclick="deletePost(' + i + ')" class="btn-danger">Xóa</button></p>';
+    div.innerHTML = html;
+    container.appendChild(div);
+  }
 }
 
-// Thêm hàm generate QR cho menu.html
-function generateQR() {
-    const qrContainer = document.getElementById('qr-code');
-    if (qrContainer) {
-        const url = window.location.href; // Hoặc thay bằng 'https://phuongnhunghealthy.com/menu.html'
-        QRCode.toCanvas(qrContainer, url, { width: 200 }, function (error) {
-            if (error) console.error(error);
-        });
-    }
+function savePost(title, content, img) {
+  posts = posts || [];
+  posts.push({ title: title, content: content, img: img, created: new Date().toISOString() });
+  saveLocalPosts();
+  loadBlog();
 }
 
-// Thêm hàm download QR
-function downloadQR() {
-    const canvas = document.getElementById('qr-code');
-    if (canvas) {
-        const pngUrl = canvas.toDataURL('image/png');
-        const downloadLink = document.createElement('a');
-        downloadLink.href = pngUrl;
-        downloadLink.download = 'menu-qr.png';
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-    }
+function deletePost(indexFromEnd) {
+  if (indexFromEnd >= 0 && indexFromEnd < posts.length) {
+    if (!confirm('Xóa bài viết?')) return;
+    posts.splice(indexFromEnd,1);
+    saveLocalPosts();
+    loadBlog();
+  }
 }
 
-// Gọi generateQR nếu ở menu.html
-if (window.location.href.includes('menu.html')) {
-    generateQR();
+// add post form handler (call from blog page)
+document.addEventListener('submit', function(e){
+  if (e.target && e.target.id === 'add-post-form') {
+    e.preventDefault();
+    var t = sanitizeInput(document.getElementById('post-title').value || '');
+    var c = sanitizeInput(document.getElementById('post-content').value || '');
+    var img = sanitizeInput(document.getElementById('post-img').value || '');
+    if (!t || !c) { alert('Vui lòng nhập tiêu đề & nội dung'); return; }
+    savePost(t,c,img);
+    e.target.reset();
+  }
+});
+
+// helper to be used by menu page when firebase provides data
+function attachMenuRealtimeFallback() {
+  if (firebaseAvailable) attachMenuRealtime();
+  else loadTodayMenu();
 }
+
+// Ensure initial setup
+initializeDishes();
+saveLocalDishes();
+
+// Export functions if needed globally
+window.loadAdmin = loadAdmin;
+window.loadBlog = loadBlog;
+window.loadTodayMenu = loadTodayMenu;
+window.attachMenuRealtime = attachMenuRealtime;
+window.renderTodayIntoMenu = renderTodayIntoMenu;
+window.saveTodayMenu = saveTodayMenu;
+window.resetSelection = resetSelection;
