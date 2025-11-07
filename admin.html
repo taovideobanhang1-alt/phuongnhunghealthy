@@ -1,107 +1,59 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Admin - Phương Nhung Healthy Bites</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        .search-box { margin-bottom: 10px; }
-        .mobile-only { display:none; }
-        @media (max-width: 768px) {
-            .admin-layout { flex-direction: column; }
-            .left, .right { width: 100%; }
-            .mobile-only { display:block; margin:10px 0; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang Quản Trị - Phương Nhung Healthy</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>Phương Nhung Healthy Bites - Admin</h1>
-    </header>
-    <nav>
-        <a href="index.html">Trang chủ</a>
-        <a href="menu.html">Menu</a>
-        <a href="blog.html">Tin tức</a>
-        <a href="contact.html">Liên hệ</a>
-        <a href="admin.html">Admin</a>
-    </nav>
-    <section class="section admin-section">
-        <h2>Admin</h2>
-        <div id="auth-section">
-            <input type="password" id="admin-password" placeholder="Nhập mật khẩu admin" required>
-            <button onclick="loginAdmin()">Đăng nhập</button>
-        </div>
-        <div id="admin-content" style="display: none;">
-            <div class="admin-layout">
-                <div class="left">
-                    <h3>Danh Sách Món (Ấn group để xổ ra)</h3>
-                    <input id="search-dish" class="search-box" placeholder="Tìm món...">
-                    <div id="dish-list"></div>
-                </div>
-                <div class="right">
-                    <h3>Món Hôm Nay (Real-time)</h3>
-                    <ul id="today-dishes"></ul>
-                </div>
-            </div>
-            <button id="save-menu">Lưu Menu Hôm Nay</button>
-            <button id="reset-selection">Xóa Các Món Đã Chọn</button>
+  <header>
+    <h1>Trang Quản Trị - Phương Nhung Healthy</h1>
+  </header>
+  <section class="section admin-section">
+    <div id="login-section">
+      <h2>Đăng nhập quản trị</h2>
+      <input type="password" id="admin-pass" placeholder="Nhập mật khẩu...">
+      <button onclick="checkLogin()">Đăng nhập</button>
+      <p id="login-status" style="color:red;"></p>
+    </div>
 
-            <h3>Thêm Món Mới</h3>
-            <form id="add-dish-form">
-                <input type="text" id="dish-name" placeholder="Tên món" required>
-                <input type="file" id="dish-img" accept="image/*">
-                <label for="dish-img">Chọn ảnh từ thư mục (không bắt buộc)</label>
-                <select id="dish-group" required>
-                    <option value="Gà">Gà</option>
-                    <option value="Bò">Bò</option>
-                    <option value="Tôm">Tôm</option>
-                    <option value="Cá">Cá</option>
-                    <option value="Lợn">Lợn</option>
-                    <option value="Rau">Rau</option>
-                    <option value="Đậu">Đậu</option>
-                    <option value="Trứng">Trứng</option>
-                    <option value="Cơm">Cơm</option>
-                    <option value="Chay">Chay</option>
-                    <option value="Khác">Khác</option>
-                </select>
-                <button type="submit">Thêm Món</button>
-            </form>
-        </div>
-    </section>
-    <footer>
-        <p>Phương Nhung Healthy Bites - 17 Phố Muối, Phường Tam Thanh, Lạng Sơn. Mở cửa: 10h-22h</p>
-        <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
-    </footer>
+    <div id="admin-layout" class="admin-layout" style="display:none;">
+      <div class="left">
+        <h2>Danh sách món</h2>
+        <div id="dish-list"></div>
+        <button id="reset-selection">Bỏ chọn tất cả</button>
+        <button id="save-menu">💾 Lưu Menu Hôm Nay</button>
 
-    <!-- Firebase (CDN) -->
-    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database-compat.js"></script>
+        <h3>➕ Thêm món mới</h3>
+        <form id="add-dish-form">
+          <input type="text" id="dish-name" placeholder="Tên món" required>
+          <select id="dish-group">
+            <option value="Gà">Gà</option>
+            <option value="Bò">Bò</option>
+            <option value="Cá">Cá</option>
+            <option value="Lợn">Lợn</option>
+            <option value="Rau">Rau</option>
+            <option value="Đậu">Đậu</option>
+            <option value="Trứng">Trứng</option>
+            <option value="Cơm">Cơm</option>
+            <option value="Chay">Chay</option>
+            <option value="Khác">Khác</option>
+          </select>
+          <input type="file" id="dish-img" accept="image/*">
+          <button type="submit">Thêm món</button>
+        </form>
+      </div>
 
+      <div class="right">
+        <h2>🍱 Món hôm nay</h2>
+        <ul id="today-dishes"></ul>
+      </div>
+    </div>
+  </section>
 
-    <script src="script.js"></script>
-    <script>
-        // init admin: keep login state for session
-        window.onload = function() {
-            const logged = sessionStorage.getItem('isLoggedIn');
-            if (logged === 'true') {
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                if (typeof loadAdmin === 'function') loadAdmin();
-            }
-        };
-
-        function loginAdmin() {
-            const password = document.getElementById('admin-password').value;
-            if (password === '123') {
-                sessionStorage.setItem('isLoggedIn', 'true');
-                document.getElementById('auth-section').style.display = 'none';
-                document.getElementById('admin-content').style.display = 'block';
-                if (typeof loadAdmin === 'function') loadAdmin();
-            } else {
-                alert('Mật khẩu sai!');
-            }
-        }
-    </script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
