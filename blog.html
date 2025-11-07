@@ -1,39 +1,24 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phương Nhung Healthy Bites - Tin Tức</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog - Phương Nhung Healthy</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>Phương Nhung Healthy Bites</h1>
-        <p>Cơm ngon, lành mạnh!</p>
-    </header>
-    <nav>
-        <a href="index.html">Trang chủ</a>
-        <a href="menu.html">Menu</a>
-        <a href="blog.html">Tin tức</a>
-        <a href="contact.html">Liên hệ</a>
-        <a href="admin.html">Admin</a>
-    </nav>
-    <section id="blog" class="section">
-        <h2>Tin Tức & Bài Viết</h2>
-        <form id="add-post-form">
-            <input type="text" id="post-title" placeholder="Tiêu đề bài viết" required>
-            <textarea id="post-content" placeholder="Nội dung bài viết" required></textarea>
-            <input type="text" id="post-img" placeholder="URL ảnh minh họa (tùy chọn)">
-            <button type="submit">Thêm Bài Viết</button>
-        </form>
-        <div id="blog-posts" aria-live="polite"></div>
-    </section>
-    <footer>
-        <p>&copy; 2025 Phương Nhung Healthy Bites. All rights reserved.</p>
-    </footer>
-    <script src="script.js"></script>
-    <script>
-        if (typeof loadBlog === 'function') loadBlog();
-    </script>
+  <header><h1>Blog - Phương Nhung Healthy</h1></header>
+  <nav>
+    <a href="index.html">Trang chủ</a>
+    <a href="menu.html">Menu hôm nay</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Liên hệ</a>
+  </nav>
+  <section class="section" id="blog-section">
+    <h2>Bài viết mới</h2>
+    <div id="blog-list"></div>
+  </section>
+  <footer><p>© 2025 Phương Nhung Healthy</p></footer>
+  <script src="script.js"></script>
 </body>
 </html>
