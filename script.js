@@ -15,7 +15,6 @@ var firebaseConfig = {
 
 /* ========== RUNTIME FLAGS & STORAGE KEYS ========== */
 var firebaseAvailable = false;
-var storageAvailable = false;
 try {
   if (window.firebase && firebase && firebase.initializeApp) {
     firebase.initializeApp(firebaseConfig);
@@ -23,7 +22,6 @@ try {
     if (firebase.database) {
       firebaseAvailable = true;
       console.log('[PHN] Firebase initialized (compat)');
-      if (firebase.storage) { storageAvailable = true; console.log('[PHN] Firebase Storage available'); }
     }
   }
 } catch (e) {
@@ -35,7 +33,6 @@ var LS_DISHES = 'phn_v3_dishes';
 var LS_TODAY = 'phn_v3_today';
 var LS_POSTS = 'phn_v3_posts';
 var ADMIN_STORAGE_KEY = 'phn_v3_admin';
-var ADMIN_FAIL_KEY = 'phn_v3_admin_fail';
 
 /* ========== In-memory state ========== */
 var dishes = JSON.parse(localStorage.getItem(LS_DISHES)) || [];
@@ -148,22 +145,6 @@ function writeDishesToFirebase() {
     console.warn('[PHN] writeDishesToFirebase error', e);
   }
 }
-
-function writePostsToFirebase() {
-  if (!firebaseAvailable) return;
-  try { firebase.database().ref('/posts').set(posts); }
-  catch(e){ console.warn('[PHN] writePostsToFirebase error', e); }
-}
-function attachPostsRealtime() {
-  if (!firebaseAvailable) return;
-  try {
-    firebase.database().ref('/posts').on('value', function(snap){
-      var val = snap.val();
-      if (val) { posts = val; saveLocalPosts(); renderPostsAdmin(); loadBlog(); }
-    });
-  } catch(e){ console.warn('[PHN] attachPostsRealtime error', e); }
-}
-
 function writeTodayToFirebase() {
   if (!firebaseAvailable) return;
   try {
@@ -225,7 +206,7 @@ function renderTodayIntoMenu() {
         var img = document.createElement('img');
         img.src = dish.img;
         img.alt = sanitizeInput(dish.name);
-        img.className = 'dish-image'; img.loading = 'lazy';
+        img.className = 'dish-image';
         li.appendChild(img);
       }
       ul.appendChild(li);
@@ -297,15 +278,12 @@ function renderDishesAdmin(searchQuery) {
         var im = document.createElement('img');
         im.src = dish.img;
         im.alt = sanitizeInput(dish.name);
-        im.loading = 'lazy'; im.style.width = '40px';
+        im.style.width = '40px';
         im.style.height = '40px';
         im.style.objectFit = 'cover';
         im.style.marginLeft = '8px';
         imgWrap.appendChild(im);
       } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
-
         imgWrap.textContent = ' Chưa có ảnh';
       }
 
@@ -393,57 +371,18 @@ function confirmDeleteDish(index) {
 }
 
 function updateDishImage(index, input) {
-  var file = input.files && input.files[0];
+  var file = input.files[0];
   if (!file) return;
-  if (storageAvailable) {
-    try {
-      var path = 'dishes/' + Date.now() + '_' + index + '_' + (file.name || 'image.jpg');
-      var ref = firebase.storage().ref().child(path);
-      var task = ref.put(file);
-      task.on('state_changed', function(){}, function(err){
-        console.warn('[PHN] upload error', err);
-        // fallback to base64
-        var reader = new FileReader();
-        reader.onload = function(e){ if (dishes[index]) { dishes[index].img = e.target.result; saveLocalDishes(); writeDishesToFirebase(); renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : ''); } };
-        reader.readAsDataURL(file);
-      }, function(){
-        task.snapshot.ref.getDownloadURL().then(function(url){
-          if (dishes[index]) {
-            dishes[index].img = url;
-            saveLocalDishes();
-            writeDishesToFirebase();
-            renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
-          }
-        });
-      });
-    } catch (e) {
-      console.warn('[PHN] storage upload exception', e);
-      var reader = new FileReader();
-      reader.onload = function (e) {
-        if (dishes[index]) {
-          dishes[index].img = e.target.result;
-          saveLocalDishes();
-          writeDishesToFirebase();
-          renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
-        }
-      };
-      reader.readAsDataURL(file);
+  var reader = new FileReader();
+  reader.onload = function (e) {
+    if (dishes[index]) {
+      dishes[index].img = e.target.result;
+      saveLocalDishes();
+      writeDishesToFirebase();
+      renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
     }
-  } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
-
-    var reader = new FileReader();
-    reader.onload = function (e) {
-      if (dishes[index]) {
-        dishes[index].img = e.target.result;
-        saveLocalDishes();
-        writeDishesToFirebase();
-        renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
-      }
-    };
-    reader.readAsDataURL(file);
-  }
+  };
+  reader.readAsDataURL(file);
 }
 
 function deleteDishImage(index) {
@@ -505,22 +444,6 @@ function loadAdmin() {
   var addForm = document.getElementById('add-dish-form');
   if (addForm) addForm.addEventListener('submit', addDishFormSubmit);
 
-  // Blog form
-  var postForm = document.getElementById('add-post-form');
-  if (postForm) postForm.addEventListener('submit', addPostFormSubmit);
-
-  // Tabs
-  var tabs = document.querySelectorAll('.tab-btn');
-  tabs.forEach(function(btn){ btn.onclick=function(){
-    document.querySelectorAll('.tab-btn').forEach(function(x){ x.classList.remove('active'); });
-    document.querySelectorAll('.tab-panel').forEach(function(x){ x.classList.remove('active'); });
-    btn.classList.add('active');
-    var id = btn.getAttribute('data-tab');
-    var panel = document.getElementById(id);
-    if (panel) panel.classList.add('active');
-  }; });
-
-
   if (firebaseAvailable) {
     try {
       firebase.database().ref('/dishes').on('value', function (snap) {
@@ -539,7 +462,6 @@ function loadAdmin() {
           renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
         }
       });
-      attachPostsRealtime();
       console.log('[PHN] loadAdmin: firebase listeners attached');
     } catch (e) {
       console.warn('[PHN] loadAdmin firebase listener error', e);
@@ -589,9 +511,6 @@ function generateQRCodeForMenu() {
         console.warn('[PHN] QRious generation failed', err);
       }
     } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
-
       // fallback: draw simple text
       if (canvasEl && canvasEl.getContext) {
         var ctx = canvasEl.getContext('2d');
@@ -636,11 +555,6 @@ function setAdminLogged() {
   localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify({ pwd: '123', expiry: expiry }));
 }
 function checkLogin() {
-  var fail = JSON.parse(localStorage.getItem(ADMIN_FAIL_KEY) || "0") || 0;
-  var lockUntil = JSON.parse(localStorage.getItem(ADMIN_FAIL_KEY + '_until') || "0") || 0;
-  if (Date.now() < lockUntil) {
-    var stl = document.getElementById('login-status'); if (stl) stl.textContent = 'Thử lại sau ít phút'; return;
-  }
   var v = document.getElementById('admin-pass') ? document.getElementById('admin-pass').value : '';
   if (v === '123') {
     setAdminLogged();
@@ -650,9 +564,6 @@ function checkLogin() {
     if (ad) ad.style.display = 'flex';
     if (typeof loadAdmin === 'function') loadAdmin();
   } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
-
     var st = document.getElementById('login-status');
     if (st) st.textContent = 'Mật khẩu không đúng';
   }
@@ -681,9 +592,6 @@ function checkLogin() {
       if (ad) ad.style.display = 'flex';
       if (typeof loadAdmin === 'function') loadAdmin();
     } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
-
       var ls = document.getElementById('login-section');
       var ad = document.getElementById('admin-layout');
       if (ls) ls.style.display = 'block';
@@ -713,41 +621,3 @@ window.renderTodayIntoMenu = renderTodayIntoMenu;
 window.saveTodayMenu = saveTodayMenu;
 window.resetSelection = resetSelection;
 window.checkLogin = checkLogin;
-
-function addPostFormSubmit(e){
-  if (e && e.preventDefault) e.preventDefault();
-  var title = sanitizeInput(document.getElementById('post-title').value||'');
-  var contentTxt = sanitizeInput(document.getElementById('post-content').value||'');
-  var fileInput = document.getElementById('post-img');
-  var file = fileInput && fileInput.files ? fileInput.files[0] : null;
-  if (!title || !contentTxt){ alert('Nhập tiêu đề và nội dung'); return; }
-  var done = function(imgUrl){
-    savePost(title, contentTxt, imgUrl || '');
-    writePostsToFirebase();
-    renderPostsAdmin();
-    var form = document.getElementById('add-post-form'); if (form) form.reset();
-    alert('Đã đăng bài');
-  };
-  if (file && storageAvailable) {
-    try{
-      var path = 'posts/' + Date.now() + '_' + (file.name||'cover.jpg');
-      var ref = firebase.storage().ref().child(path);
-      var task = ref.put(file);
-      task.on('state_changed', function(){}, function(err){
-        console.warn('[PHN] post upload error', err);
-        // fallback base64
-        var r = new FileReader(); r.onload = function(ev){ done(ev.target.result); }; r.readAsDataURL(file);
-      }, function(){
-        task.snapshot.ref.getDownloadURL().then(function(url){ done(url); });
-      });
-    } catch(e){
-      console.warn('[PHN] post upload exception', e);
-      var r = new FileReader(); r.onload = function(ev){ done(ev.target.result); }; r.readAsDataURL(file);
-    }
-  } else if (file){
-    var r = new FileReader(); r.onload = function(ev){ done(ev.target.result); }; r.readAsDataURL(file);
-  } else {
-    fail = (fail||0)+1; localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(fail));
-    if (fail >= 5){ localStorage.setItem(ADMIN_FAIL_KEY + '_until', JSON.stringify(Date.now()+3*60*1000)); localStorage.setItem(ADMIN_FAIL_KEY, JSON.stringify(0)); }
- done(''); }
-}
