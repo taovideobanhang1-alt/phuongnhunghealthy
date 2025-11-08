@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta property="og:title" content="Trang Quản Trị - Phương Nhung Healthy">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
-  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trang Quản Trị - Phương Nhung Healthy</title>
@@ -33,18 +29,23 @@
       <p id="login-status" style="color:red;"></p>
     </div>
 
-    <!-- GIAO DIỆN ADMIN -->
+    <!-- ADMIN UI -->
     <div id="admin-layout" class="admin-layout" style="display:none;">
-      <div id="admin-tabs" class="tabs">
+
+      <div class="tabs">
         <button class="tab-btn active" data-tab="tab-dishes">Món</button>
         <button class="tab-btn" data-tab="tab-blog">Blog</button>
       </div>
 
+      <!-- TAB MÓN -->
       <div id="tab-dishes" class="tab-panel active">
+
         <div class="left">
           <input type="text" id="search-dish" placeholder="Tìm món...">
+
           <h2>Danh sách món</h2>
           <div id="dish-list"></div>
+
           <button id="reset-selection">Bỏ chọn tất cả</button>
           <button id="save-menu">💾 Lưu Menu Hôm Nay</button>
 
@@ -67,8 +68,15 @@
             <button type="submit">Thêm món</button>
           </form>
         </div>
+
+        <div class="right">
+          <h2>🍱 Món hôm nay</h2>
+          <ul id="today-dishes"></ul>
+        </div>
+
       </div>
 
+      <!-- TAB BLOG -->
       <div id="tab-blog" class="tab-panel">
         <h2>📝 Quản trị Blog</h2>
         <form id="add-post-form">
@@ -78,45 +86,20 @@
           <input type="file" id="post-img" accept="image/*">
           <button type="submit">Đăng bài</button>
         </form>
+
         <h3>Bài viết gần đây</h3>
         <div id="admin-posts"></div>
       </div>
 
-      <div class="right">
-        <h2>🍱 Món hôm nay</h2>
-        <ul id="today-dishes"></ul>
-      </div>
     </div>
   </section>
 
-  <!-- SCRIPT -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="script.js" defer></script>
 
-  <script>
-    // ===== ĐĂNG NHẬP ĐƠN GIẢN (KHÔNG DÙNG FIREBASE LOGIN) =====
-    function checkLogin() {
-      const pass = document.getElementById("admin-pass").value.trim();
-      if (pass === "123") {
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("admin-layout").style.display = "flex";
-      } else {
-        document.getElementById("login-status").innerText = "Sai mật khẩu!";
-      }
-    }
-  </script>
-
-  <!-- Chat -->
-  <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank"></a>
-  </div>
-
-  <!-- FOOTER + LINK QUẢN TRỊ -->
   <footer style="text-align:center;margin-top:40px;font-size:14px;opacity:0.8;">
-    © Phương Nhung Healthy • <a href="admin.html" style="text-decoration:none;color:#388E3C;">Quản trị</a>
+    © Phương Nhung Healthy • <a href="admin.html" style="color:#388E3C;">Quản trị</a>
   </footer>
-
 </body>
 </html>
