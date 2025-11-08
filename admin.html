@@ -10,17 +10,22 @@
   <title>Trang Quản Trị - Phương Nhung Healthy</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <header>
     <h1>Trang Quản Trị - Phương Nhung Healthy</h1>
   </header>
+
   <nav class="admin-nav">
     <a href="index.html">Trang chủ</a>
     <a href="menu.html">Menu</a>
     <a href="blog.html">Blog</a>
     <a href="contact.html">Liên hệ</a>
   </nav>
+
   <section class="section admin-section">
+
+    <!-- ĐĂNG NHẬP -->
     <div id="login-section">
       <h2>Đăng nhập quản trị</h2>
       <input type="password" id="admin-pass" placeholder="Nhập mật khẩu...">
@@ -28,41 +33,42 @@
       <p id="login-status" style="color:red;"></p>
     </div>
 
+    <!-- GIAO DIỆN ADMIN -->
     <div id="admin-layout" class="admin-layout" style="display:none;">
       <div id="admin-tabs" class="tabs">
         <button class="tab-btn active" data-tab="tab-dishes">Món</button>
         <button class="tab-btn" data-tab="tab-blog">Blog</button>
       </div>
+
       <div id="tab-dishes" class="tab-panel active">
-      <div class="left">
-        <input type="text" id="search-dish" placeholder="Tìm món...">
-        <h2>Danh sách món</h2>
-        <div id="dish-list"></div>
-        <button id="reset-selection">Bỏ chọn tất cả</button>
-        <button id="save-menu">💾 Lưu Menu Hôm Nay</button>
+        <div class="left">
+          <input type="text" id="search-dish" placeholder="Tìm món...">
+          <h2>Danh sách món</h2>
+          <div id="dish-list"></div>
+          <button id="reset-selection">Bỏ chọn tất cả</button>
+          <button id="save-menu">💾 Lưu Menu Hôm Nay</button>
 
-        <h3>➕ Thêm món mới</h3>
-        <form id="add-dish-form">
-          <input type="text" id="dish-name" placeholder="Tên món" required>
-          <select id="dish-group">
-            <option value="Gà">Gà</option>
-            <option value="Bò">Bò</option>
-            <option value="Cá">Cá</option>
-            <option value="Lợn">Lợn</option>
-            <option value="Rau">Rau</option>
-            <option value="Đậu">Đậu</option>
-            <option value="Trứng">Trứng</option>
-            <option value="Cơm">Cơm</option>
-            <option value="Chay">Chay</option>
-            <option value="Khác">Khác</option>
-          </select>
-          <input type="file" id="dish-img" accept="image/*">
-          <button type="submit">Thêm món</button>
-        </form>
+          <h3>➕ Thêm món mới</h3>
+          <form id="add-dish-form">
+            <input type="text" id="dish-name" placeholder="Tên món" required>
+            <select id="dish-group">
+              <option value="Gà">Gà</option>
+              <option value="Bò">Bò</option>
+              <option value="Cá">Cá</option>
+              <option value="Lợn">Lợn</option>
+              <option value="Rau">Rau</option>
+              <option value="Đậu">Đậu</option>
+              <option value="Trứng">Trứng</option>
+              <option value="Cơm">Cơm</option>
+              <option value="Chay">Chay</option>
+              <option value="Khác">Khác</option>
+            </select>
+            <input type="file" id="dish-img" accept="image/*">
+            <button type="submit">Thêm món</button>
+          </form>
+        </div>
       </div>
 
-      </div>
-      </div>
       <div id="tab-blog" class="tab-panel">
         <h2>📝 Quản trị Blog</h2>
         <form id="add-post-form">
@@ -75,6 +81,7 @@
         <h3>Bài viết gần đây</h3>
         <div id="admin-posts"></div>
       </div>
+
       <div class="right">
         <h2>🍱 Món hôm nay</h2>
         <ul id="today-dishes"></ul>
@@ -82,14 +89,34 @@
     </div>
   </section>
 
+  <!-- SCRIPT -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="script.js" defer></script>
 
+  <script>
+    // ===== ĐĂNG NHẬP ĐƠN GIẢN (KHÔNG DÙNG FIREBASE LOGIN) =====
+    function checkLogin() {
+      const pass = document.getElementById("admin-pass").value.trim();
+      if (pass === "123") {
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("admin-layout").style.display = "flex";
+      } else {
+        document.getElementById("login-status").innerText = "Sai mật khẩu!";
+      }
+    }
+  </script>
+
+  <!-- Chat -->
   <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank"></a>
+    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank"></a>
   </div>
+
+  <!-- FOOTER + LINK QUẢN TRỊ -->
+  <footer style="text-align:center;margin-top:40px;font-size:14px;opacity:0.8;">
+    © Phương Nhung Healthy • <a href="admin.html" style="text-decoration:none;color:#388E3C;">Quản trị</a>
+  </footer>
 
 </body>
 </html>
