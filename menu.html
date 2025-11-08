@@ -1,24 +1,31 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <meta property="og:title" content="Menu - Phương Nhung Healthy">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
+  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menu Healthy Hôm Nay</title>
+  <title>Menu - Phương Nhung Healthy</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <h1>Menu Healthy Hôm Nay</h1>
+    <h1>Menu</h1>
+    <p id="realtime-clock"></p>
     <p id="realtime-clock"></p>
   </header>
-  <nav>
+  
+  <nav class="main-nav">
     <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu hôm nay</a>
+    <a href="menu.html">Menu</a>
     <a href="blog.html">Blog</a>
     <a href="contact.html">Liên hệ</a>
   </nav>
 
   <section class="section" id="menu-list">
+    <div id="hover-preview" class="hover-preview" aria-hidden="true"></div>
     <h2>Đang tải menu...</h2>
   </section>
 
@@ -33,6 +40,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
+
+  <div class="chat-fab">
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
+    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+  </div>
+
 </body>
 </html>

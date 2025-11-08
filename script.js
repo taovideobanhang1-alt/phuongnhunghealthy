@@ -213,7 +213,48 @@ function renderTodayIntoMenu() {
     });
   });
   menuList.appendChild(ul);
+  // ===== Hover preview logic =====
+  try{
+    var preview = document.getElementById('hover-preview');
+    if (preview){
+      var moveHandler = function(ev){ 
+        var x = ev.clientX + 18; var y = ev.clientY + 18;
+        preview.style.left = x + 'px'; preview.style.top = y + 'px';
+      };
+      menuList.querySelectorAll('li').forEach(function(li){
+        var img = li.querySelector('img.dish-image');
+        var nameEl = li.querySelector('span, .menu-name') || li;
+        if (!img || !nameEl) return;
+        nameEl.classList.add('menu-name');
+        nameEl.addEventListener('mouseenter', function(e){
+          if (window.innerWidth <= 768) return;
+          preview.innerHTML = '<img src="'+ img.src +'" alt="preview">';
+          preview.style.opacity = 1; preview.style.transform = 'translateY(0)';
+          preview.setAttribute('aria-hidden','false');
+          moveHandler(e);
+          document.addEventListener('mousemove', moveHandler);
+        });
+        nameEl.addEventListener('mouseleave', function(){
+          if (window.innerWidth <= 768) return;
+          preview.style.opacity = 0; preview.style.transform = 'translateY(6px)';
+          preview.setAttribute('aria-hidden','true');
+          document.removeEventListener('mousemove', moveHandler);
+        });
+        nameEl.addEventListener('click', function(){
+          if (window.innerWidth > 768) return;
+          li.classList.toggle('open');
+          var exists = li.querySelector('.dish-photo');
+          if (!exists){
+            var ph = document.createElement('img');
+            ph.src = img.src; ph.alt = img.alt; ph.className = 'dish-photo';
+            li.appendChild(ph);
+          }
+        });
+      });
+    }
+  } catch(e){ console.warn('[PHN] hover preview logic error', e); }
 }
+
 
 function loadTodayMenu() {
   todayDishes = JSON.parse(localStorage.getItem(LS_TODAY)) || todayDishes || [];
@@ -370,17 +411,22 @@ function confirmDeleteDish(index) {
   renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
 }
 
-function updateDishImage(index, input) {
-  var file = input.files[0];
+function updateDishImage(index, input){
+  var file = input.files && input.files[0];
   if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function (e) {
-    if (dishes[index]) {
-      dishes[index].img = e.target.result;
-      saveLocalDishes();
-      writeDishesToFirebase();
+  processImageToCanvas(file, function(dataUrl){
+    var readerFallback = function(){
+      var r = new FileReader();
+      r.onload = function(e){ if (dishes[index]){ dishes[index].img = e.target.result; saveLocalDishes(); writeDishesToFirebase(); renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : ''); } };
+      r.readAsDataURL(file);
+    };
+    if (dataUrl && dishes[index]){
+      dishes[index].img = dataUrl;
+      saveLocalDishes(); writeDishesToFirebase();
       renderDishesAdmin(document.getElementById('search-dish') ? document.getElementById('search-dish').value : '');
-    }
+    } else { readerFallback(); }
+  });
+}
   };
   reader.readAsDataURL(file);
 }
@@ -421,10 +467,15 @@ function addDishFormSubmit(e) {
     renderDishesAdmin('');
     if (document.getElementById('add-dish-form')) document.getElementById('add-dish-form').reset();
   };
-  if (file) {
-    var r = new FileReader();
-    r.onload = function (ev) { addFn(ev.target.result); };
-    r.readAsDataURL(file);
+  if (file){
+    processImageToCanvas(file, function(dataUrl){
+      if (dataUrl){ addFn(dataUrl); }
+      else {
+        var r = new FileReader();
+        r.onload = function(ev){ addFn(ev.target.result); };
+        r.readAsDataURL(file);
+      }
+    });
   } else addFn('');
 }
 
@@ -621,3 +672,30 @@ window.renderTodayIntoMenu = renderTodayIntoMenu;
 window.saveTodayMenu = saveTodayMenu;
 window.resetSelection = resetSelection;
 window.checkLogin = checkLogin;
+
+/* ===== Image preprocess: crop to 4:3 and resize to max 1200x900 ===== */
+function processImageToCanvas(file, cb){
+  try{
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = new Image();
+      img.onload = function(){
+        var ratio = 4/3;
+        var iw = img.width, ih = img.height;
+        var targetW = iw, targetH = Math.round(iw/ratio);
+        if (targetH > ih){ targetH = ih; targetW = Math.round(ih*ratio); }
+        var sx = Math.round((iw - targetW)/2);
+        var sy = Math.round((ih - targetH)/2);
+        var outW = Math.min(1200, targetW);
+        var outH = Math.round(outW/ratio);
+        var c = document.createElement('canvas');
+        c.width = outW; c.height = outH;
+        var ctx = c.getContext('2d');
+        ctx.drawImage(img, sx, sy, targetW, targetH, 0, 0, outW, outH);
+        cb(c.toDataURL('image/jpeg', 0.9));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }catch(err){ console.warn('[PHN] processImageToCanvas error', err); cb(null); }
+}

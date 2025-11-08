@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <meta property="og:title" content="Trang Quản Trị - Phương Nhung Healthy">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
+  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Trang Quản Trị - Phương Nhung Healthy</title>
@@ -10,6 +14,12 @@
   <header>
     <h1>Trang Quản Trị - Phương Nhung Healthy</h1>
   </header>
+  <nav class="admin-nav">
+    <a href="index.html">Trang chủ</a>
+    <a href="menu.html">Menu</a>
+    <a href="blog.html">Blog</a>
+    <a href="contact.html">Liên hệ</a>
+  </nav>
   <section class="section admin-section">
     <div id="login-section">
       <h2>Đăng nhập quản trị</h2>
@@ -19,7 +29,13 @@
     </div>
 
     <div id="admin-layout" class="admin-layout" style="display:none;">
+      <div id="admin-tabs" class="tabs">
+        <button class="tab-btn active" data-tab="tab-dishes">Món</button>
+        <button class="tab-btn" data-tab="tab-blog">Blog</button>
+      </div>
+      <div id="tab-dishes" class="tab-panel active">
       <div class="left">
+        <input type="text" id="search-dish" placeholder="Tìm món...">
         <h2>Danh sách món</h2>
         <div id="dish-list"></div>
         <button id="reset-selection">Bỏ chọn tất cả</button>
@@ -45,6 +61,20 @@
         </form>
       </div>
 
+      </div>
+      </div>
+      <div id="tab-blog" class="tab-panel">
+        <h2>📝 Quản trị Blog</h2>
+        <form id="add-post-form">
+          <input type="text" id="post-title" placeholder="Tiêu đề" required>
+          <textarea id="post-content" placeholder="Nội dung" rows="5" required></textarea>
+          <label>Ảnh bìa (tùy chọn)</label>
+          <input type="file" id="post-img" accept="image/*">
+          <button type="submit">Đăng bài</button>
+        </form>
+        <h3>Bài viết gần đây</h3>
+        <div id="admin-posts"></div>
+      </div>
       <div class="right">
         <h2>🍱 Món hôm nay</h2>
         <ul id="today-dishes"></ul>
@@ -54,6 +84,12 @@
 
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js" defer></script>
+
+  <div class="chat-fab">
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
+    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+  </div>
+
 </body>
 </html>
