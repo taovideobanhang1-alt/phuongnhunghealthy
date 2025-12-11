@@ -1,39 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta property="og:title" content="Phương Nhung Healthy Bites">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
-  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phương Nhung Healthy Bites</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Phuong Nhung Healthy Food — Thực đơn Lành mạnh</title>
+  <meta name="description" content="Phuong Nhung Healthy Food - thực đơn tự chọn, ăn lành mạnh. Giờ mở cửa 10:00 - 19:30. Xem thực đơn hôm nay và liên hệ đặt món.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;600;800&display=swap" rel="stylesheet">
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-api.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Phương Nhung Healthy Bites</h1>
-    <p>Eat Clean - Healthy - Balance</p>
-  </header>
-  
-  <nav class="main-nav">
-    <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu</a>
-    <a href="blog.html">Blog</a>
-    <a href="contact.html">Liên hệ</a>
-  </nav>
+  <div class="site-wrap">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="index.html">
+          <div class="logo">PN</div>
+          <div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div>
+        </a>
+        <nav class="nav">
+          <a href="index.html" class="active">Trang chủ</a>
+          <a href="menu.html">Thực đơn</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact.html">Liên hệ</a>
+          <a href="admin.html">Quản trị</a>
+        </nav>
+      </div>
+    </header>
 
-  <section class="banner">
-    <img src="https://i.imgur.com/V8lZrVJ.jpg" alt="Healthy Food Banner">
-  </section>
+    <main class="content">
+      <section class="hero">
+        <div class="container">
+          <h1>Phuong Nhung Healthy Food</h1>
+          <p class="lead">Thực đơn tự chọn, tươi ngon, dinh dưỡng — Giá linh hoạt theo khẩu phần và thị trường.</p>
+          <p><a class="btn" href="menu.html">Xem thực đơn hôm nay</a> <a class="btn secondary" href="contact.html">Liên hệ / Đặt món</a></p>
+        </div>
+      </section>
 
-  <footer>
-    <p>© 2025 Phương Nhung Healthy Bites | All Rights Reserved • <a href="admin.html">Quản trị</a></p>
-  </footer>
+      <section class="container">
+        <div class="grid cols-2">
+          <div class="card">
+            <h2 class="section-title">Giới thiệu</h2>
+            <p>Phuong Nhung Healthy Food chuyên phục vụ các bữa ăn cân bằng dinh dưỡng, nguyên liệu tươi sạch, phù hợp cho gia đình và người bận rộn.</p>
+            <p class="note">Giờ mở cửa: 10:00 - 19:30 | Số điện thoại: <a href="tel:+84902032188">0902.032.188</a></p>
+          </div>
+
+          <aside class="card">
+            <h3>Nhanh</h3>
+            <p class="text-muted">Bạn có thể xem thực đơn, gọi điện hoặc nhắn qua Messenger/Zalo nhanh chóng.</p>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <a class="chat-btn chat-call" href="tel:+84902032188" aria-label="Gọi">📞</a>
+              <a class="chat-btn chat-mes" href="https://m.me/phuongnhunghealthy" target="_blank" aria-label="Messenger">M</a>
+              <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" aria-label="Zalo">Z</a>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="container" style="margin-top:18px">
+        <div class="card">
+          <h2>Những bài viết mới</h2>
+          <div id="home-posts" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px"></div>
+        </div>
+      </section>
+
+      <section class="container" style="margin:18px 0">
+        <div class="card">
+          <h2>Cam kết</h2>
+          <p class="text-muted">Chúng tôi cam kết nguyên liệu tươi, an toàn và khẩu phần dinh dưỡng hợp lý.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div>
+          <strong>Phuong Nhung Healthy Food</strong><br>
+          <small class="text-muted">© 2025 Phuong Nhung Healthy Food</small>
+        </div>
+        <div>
+          <div>Giờ mở cửa: 10:00 - 19:30</div>
+          <div><a href="tel:+84902032188">0902.032.188</a> • <a href="https://www.facebook.com/phuongnhunghealthy" target="_blank">Facebook</a></div>
+        </div>
+      </div>
+    </footer>
+  </div>
 
   <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank">Z</a>
+    <a class="chat-btn chat-mes" href="https://m.me/phuongnhunghealthy" target="_blank">M</a>
+    <a class="chat-btn chat-call" href="tel:+84902032188">📞</a>
   </div>
+
+  <script src="script.js"></script>
+  <script>
+    const homePostsEl = document.getElementById('home-posts');
+    // Will be filled via realtime subscription; fallback to ALL_POSTS if available
+    // small fetch: subscribeToPosts must populate ALL_POSTS; but if not available show local
+    setTimeout(()=>{ if(window.ALL_POSTS && ALL_POSTS.length>0){ ALL_POSTS.slice(0,3).forEach(p=>{ const card=document.createElement('div'); card.className='card'; const img=document.createElement('img'); img.src=p.img||'placeholder-post.jpg'; img.alt=p.title; img.style.width='100%'; img.style.height='160px'; img.style.objectFit='cover'; img.loading='lazy'; const h=document.createElement('h4'); h.textContent=p.title; const t=document.createElement('div'); t.className='text-muted'; t.textContent=new Date(p.date).toLocaleDateString(); const pnode=document.createElement('p'); pnode.textContent=p.content.slice(0,110)+'...'; card.appendChild(img); card.appendChild(h); card.appendChild(t); card.appendChild(pnode); home-posts.appendChild(card); }); } },800);
+  </script>
 </body>
 </html>

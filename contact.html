@@ -1,39 +1,69 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta property="og:title" content="Liên hệ - Phương Nhung Healthy">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
-  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liên hệ - Phương Nhung Healthy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Liên hệ — Phuong Nhung Healthy Food</title>
+  <meta name="description" content="Liên hệ Phuong Nhung Healthy Food — địa chỉ, số điện thoại, bản đồ và hướng dẫn đường đi.">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-api.js"></script>
 </head>
 <body>
-  <header><h1>Liên hệ Phương Nhung Healthy</h1></header>
-  
-  <nav class="main-nav">
-    <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu</a>
-    <a href="blog.html">Blog</a>
-    <a href="contact.html">Liên hệ</a>
-  </nav>
+  <div class="site-wrap">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="index.html"><div class="logo">PN</div><div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div></a>
+        <nav class="nav">
+          <a href="index.html">Trang chủ</a>
+          <a href="menu.html">Thực đơn</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact.html" class="active">Liên hệ</a>
+          <a href="admin.html">Quản trị</a>
+        </nav>
+      </div>
+    </header>
 
-  <section class="section contact">
-    <h2>Thông tin liên hệ</h2>
-    <p>📞 <a href="tel:0902032188">0902032188</a></p>
-    <p>🏠 17 Phố Muối, Phường Tam Thanh, TP. Lạng Sơn</p>
-    <p>💌 Email: healthybites@gmail.com</p>
-  </section>
+    <main class="content container">
+      <div class="card">
+        <h1>Liên hệ</h1>
+        <p class="text-muted">Địa chỉ: 17 Phố Muối, Phường Tam Thanh, TP. Lạng Sơn</p>
+        <p>Điện thoại: <a href="tel:+84902032188">0902.032.188</a></p>
+        <p>Fanpage: <a href="https://www.facebook.com/phuongnhunghealthy" target="_blank">Phuong Nhung Healthy</a></p>
+        <p>Facebook cá nhân: <a href="https://www.facebook.com/nhung.ba.18" target="_blank">nhung.ba.18</a></p>
+        <p>Zalo: <a href="https://zalo.me/0902032188" target="_blank">0902.032.188</a></p>
 
-  <footer>
-    <p>© 2025 Phương Nhung Healthy • <a href="admin.html">Quản trị</a></p>
-  </footer>
+        <h3>Bản đồ</h3>
+        <div style="width:100%;height:380px;border-radius:10px;overflow:hidden">
+          <iframe id="contact-map" width="100%" height="100%" frameborder="0" style="border:0"
+            src="https://www.google.com/maps?q=17%20Phố%20Muối%20Phường%20Tam%20Thanh%20Lạng%20Sơn&output=embed"
+            allowfullscreen aria-hidden="false" tabindex="0"></iframe>
+        </div>
+
+        <div style="margin-top:12px">
+          <button id="btn-directions" class="btn">Tìm đường tới quán</button>
+          <p class="note">Nhấn "Tìm đường" để cho phép định vị (nếu bạn cho phép), sau đó Google Maps sẽ mở hướng dẫn chỉ đường.</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div><strong>Phuong Nhung Healthy Food</strong><br><small class="text-muted">© 2025</small></div>
+        <div>Giờ mở cửa: 10:00 - 19:30 • <a href="tel:+84902032188">0902.032.188</a></div>
+      </div>
+    </footer>
+  </div>
 
   <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank">Z</a>
+    <a class="chat-btn chat-mes" href="https://m.me/phuongnhunghealthy" target="_blank">M</a>
+    <a class="chat-btn chat-call" href="tel:+84902032188">📞</a>
   </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

@@ -1,100 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang Quản Trị - Phương Nhung Healthy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Quản trị — Phuong Nhung Healthy Food</title>
+  <meta name="description" content="Trang quản trị Phuong Nhung Healthy Food - quản lý thực đơn và blog.">
   <link rel="stylesheet" href="styles.css">
+  <!-- Firebase CDN (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-api.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Trang Quản Trị - Phương Nhung Healthy</h1>
-  </header>
+  <div class="site-wrap">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="index.html"><div class="logo">PN</div><div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div></a>
+        <nav class="nav">
+          <a href="index.html">Trang chủ</a>
+          <a href="menu.html">Thực đơn</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact.html">Liên hệ</a>
+          <a href="admin.html" class="active">Quản trị</a>
+        </nav>
+      </div>
+    </header>
 
-  <nav class="admin-nav">
-    <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu</a>
-    <a href="blog.html">Blog</a>
-    <a href="contact.html">Liên hệ</a>
-  </nav>
-
-  <section class="section admin-section">
-
-    <!-- ĐĂNG NHẬP -->
-    <div id="login-section">
-      <h2>Đăng nhập quản trị</h2>
-      <input type="password" id="admin-pass" placeholder="Nhập mật khẩu...">
-      <button onclick="checkLogin()">Đăng nhập</button>
-      <p id="login-status" style="color:red;"></p>
-    </div>
-
-    <!-- GIAO DIỆN QUẢN TRỊ -->
-    <div id="admin-layout" class="admin-layout" style="display:none;">
-
-      <div class="tabs">
-        <button class="tab-btn active" data-tab="tab-dishes">Món</button>
-        <button class="tab-btn" data-tab="tab-blog">Blog</button>
+    <main class="content container">
+      <div id="admin-locked" class="card">
+        <h2>Trang quản trị</h2>
+        <p class="text-muted">Nhập mật khẩu để tiếp tục.</p>
       </div>
 
-      <!-- TAB MÓN ĂN -->
-      <div id="tab-dishes" class="tab-panel active">
-        <div class="left">
-          <input type="text" id="search-dish" placeholder="Tìm món...">
+      <div id="admin-layout" class="card" style="display:none">
+        <h1>Trang quản trị</h1>
 
-          <h2>Danh sách món</h2>
-          <div id="dish-list"></div>
-
-          <button id="reset-selection">Bỏ chọn tất cả</button>
-          <button id="save-menu">💾 Lưu Menu Hôm Nay</button>
-
-          <h3>➕ Thêm món mới</h3>
-          <form id="add-dish-form">
-            <input type="text" id="dish-name" placeholder="Tên món" required>
-            <select id="dish-group">
-              <option value="Gà">Gà</option>
-              <option value="Bò">Bò</option>
-              <option value="Cá">Cá</option>
-              <option value="Lợn">Lợn</option>
-              <option value="Rau">Rau</option>
-              <option value="Đậu">Đậu</option>
-              <option value="Trứng">Trứng</option>
-              <option value="Cơm">Cơm</option>
-              <option value="Chay">Chay</option>
-              <option value="Khác">Khác</option>
-            </select>
-            <input type="file" id="dish-img" accept="image/*">
-            <button type="submit">Thêm món</button>
-          </form>
+        <!-- IMPORT BUTTON (top) -->
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
+          <button id="import-defaults" class="btn">📥 Import 66 món mặc định</button>
+          <div id="import-status" style="font-weight:600;color:#174D2F"></div>
         </div>
 
-        <div class="right">
-          <h2>🍱 Món hôm nay</h2>
-          <ul id="today-dishes"></ul>
+        <div class="admin-grid" style="margin-top:12px">
+          <div>
+            <div class="section-title"><h2>Quản lý Món (Accordion)</h2></div>
+            <div style="margin-bottom:8px;"><input id="search-dish" class="input" placeholder="Tìm món..."></div>
+            <div id="dish-list" style="margin-bottom:12px"></div>
+
+            <div class="card" style="margin-top:10px">
+              <h3>➕ Thêm món mới</h3>
+              <form id="add-dish-form">
+                <div class="form-row">
+                  <input id="dish-name" class="input" placeholder="Tên món" required>
+                  <select id="dish-group" class="input">
+                    <option>Gà</option><option>Bò</option><option>Cá</option><option>Lợn</option><option>Rau</option><option>Đậu</option><option>Trứng</option><option>Cơm</option><option>Chay</option><option>Khác</option>
+                  </select>
+                </div>
+                <div style="margin-top:8px">
+                  <input id="dish-img" class="input file" type="file" accept="image/*">
+                </div>
+                <div style="margin-top:8px"><button class="btn" type="submit">Thêm món</button></div>
+              </form>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <h3>🍱 Món hôm nay (Danh sách)</h3>
+              <ol id="today-dishes" style="padding-left:18px"></ol>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button id="save-menu" class="btn">💾 Lưu Menu Hôm Nay</button>
+                <button id="reset-selection" class="btn secondary">Bỏ chọn tất cả</button>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:12px">
+              <h3>📝 Quản trị Blog</h3>
+              <form id="add-post-form">
+                <div style="margin-bottom:8px"><input id="post-title" class="input" placeholder="Tiêu đề" required></div>
+                <div style="margin-bottom:8px"><textarea id="post-content" class="input" rows="4" placeholder="Nội dung" required></textarea></div>
+                <div style="margin-bottom:8px"><input id="post-img" class="input file" type="file" accept="image/*"></div>
+                <div><button class="btn" type="submit">Đăng bài</button></div>
+              </form>
+              <h4 style="margin-top:12px">Bài viết gần đây</h4>
+              <div id="admin-posts" style="margin-top:8px"></div>
+            </div>
+          </div>
         </div>
       </div>
+    </main>
 
-      <!-- TAB BLOG -->
-      <div id="tab-blog" class="tab-panel">
-        <h2>📝 Quản trị Blog</h2>
-        <form id="add-post-form">
-          <input type="text" id="post-title" placeholder="Tiêu đề" required>
-          <textarea id="post-content" placeholder="Nội dung" rows="5" required></textarea>
-          <label>Ảnh bìa (tùy chọn)</label>
-          <input type="file" id="post-img" accept="image/*">
-          <button type="submit">Đăng bài</button>
-        </form>
-
-        <h3>Bài viết gần đây</h3>
-        <div id="admin-posts"></div>
+    <footer class="footer">
+      <div class="footer-inner">
+        <div><strong>Phuong Nhung Healthy Food</strong><br><small class="text-muted">© 2025</small></div>
+        <div>Giờ mở cửa: 10:00 - 19:30 • <a href="tel:+84902032188">0902.032.188</a></div>
       </div>
+    </footer>
+  </div>
 
-    </div>
-  </section>
+  <script>
+    // prompt then show admin layout (unchanged)
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const pwd = prompt('Nhập mật khẩu quản trị:');
+      if(pwd === '123'){
+        document.getElementById('admin-locked').style.display='none';
+        document.getElementById('admin-layout').style.display='block';
+        // small delay to ensure firebase-init loaded
+        setTimeout(()=>{ if(window.initAdminPage) initAdminPage(); if(window.setupImportButton) setupImportButton(); }, 250);
+      } else { alert('Sai mật khẩu'); location.href='index.html'; }
+    });
+  </script>
 
-  <script src="script.js" defer></script>
-
-  <footer style="text-align:center; margin-top:40px; font-size:14px; opacity:0.8;">
-    Phiên bản v3.1 – Build by GPT-5 cho Phương Nhung Healthy
-  </footer>
+  <script src="script.js"></script>
 </body>
 </html>

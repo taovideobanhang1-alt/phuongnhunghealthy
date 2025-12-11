@@ -1,334 +1,359 @@
-// script.js (Phương Nhung Healthy v3.1)
+// script.js (admin + site logic, with Import 66 món integration)
 
-// Storage keys
-var LS_DISHES = "phn_v3_dishes";
-var LS_TODAY = "phn_v3_today";
-var LS_POSTS = "phn_v3_posts";
-var LS_ADMIN = "phn_v3_admin";
+/* placeholders */
+const PLACEHOLDER_FOOD = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="%23f2f6f2"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%238b9f8b" font-size="20">Ảnh món đang cập nhật</text></svg>';
+const PLACEHOLDER_POST = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="%23f7f7f7"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999999" font-size="20">Ảnh bài viết</text></svg>';
 
-// Initialize data from localStorage or default
-var dishes = JSON.parse(localStorage.getItem(LS_DISHES)) || [];
-var todayDishes = JSON.parse(localStorage.getItem(LS_TODAY)) || [];
-var posts = JSON.parse(localStorage.getItem(LS_POSTS)) || [];
+let ALL_DISHES = [];
+let TODAY_ITEMS = [];
+let ALL_POSTS = [];
 
-// Helpers
-function sanitizeInput(s) {
-  return String(s || "").replace(/[<>]/g, "");
-}
-function normalizeGroup(g) {
-  if (g === "Thịt Lợn") return "Lợn";
-  if (g === "Món Chay") return "Chay";
-  return g;
-}
-// Save to localStorage
-function saveLocalDishes() { localStorage.setItem(LS_DISHES, JSON.stringify(dishes)); }
-function saveLocalToday()  { localStorage.setItem(LS_TODAY,  JSON.stringify(todayDishes)); }
-function saveLocalPosts()  { localStorage.setItem(LS_POSTS,  JSON.stringify(posts)); }
+let unsubDishes = null, unsubToday = null, unsubPosts = null;
 
-// Render admin dish list
-function renderDishesAdmin(searchQuery) {
-  searchQuery = (searchQuery || "").toLowerCase();
-  var listEl = document.getElementById("dish-list");
-  var todayEl = document.getElementById("today-dishes");
-  listEl.innerHTML = "";
-  todayEl.innerHTML = "";
-  // Nhóm món
-  var groups = [...new Set(dishes.map(d => normalizeGroup(d.group)))].sort();
-  groups.forEach(group => {
-    var items = dishes.filter(d => normalizeGroup(d.group) === group && d.name.toLowerCase().includes(searchQuery));
-    if (!items.length) return;
-    var wrap = document.createElement("div");
-    wrap.className = "accordion";
-    var h = document.createElement("h4");
-    h.dataset.group = group;
-    h.innerHTML = group + " (" + items.length + ") <span class='arrow'>&#9660;</span>";
-    h.onclick = function() { toggleAccordion(h); };
-    var ul = document.createElement("ul");
-    ul.className = "accordion-content";
-    items.forEach(d => {
-      var idx = dishes.indexOf(d);
-      var li = document.createElement("li");
-      // Checkbox chọn món hôm nay
-      var cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = !!d.selected;
-      cb.onchange = function() {
-        dishes[idx].selected = cb.checked;
-        saveLocalDishes();
-      };
-      // Tên món
-      var name = document.createElement("span");
-      name.textContent = sanitizeInput(d.name);
-      // Ảnh món
-      var img = document.createElement("img");
-      img.src = d.img || "";
-      img.style.width = "40px";
-      img.style.height = "40px";
-      img.style.objectFit = "cover";
-      img.style.marginLeft = "8px";
-      // Input file ẩn
-      var file = document.createElement("input");
-      file.type = "file"; file.accept = "image/*"; file.style.display = "none";
-      file.onchange = function() { updateDishImage(idx, file); };
-      // Nút tải ảnh
-      var btnImg = document.createElement("button");
-      btnImg.className = "btn-green"; btnImg.textContent = "Ảnh";
-      btnImg.onclick = function() { file.click(); };
-      // Nút xóa
-      var btnDel = document.createElement("button");
-      btnDel.className = "btn-danger"; btnDel.textContent = "Xóa";
-      btnDel.onclick = function() {
-        if (confirm("Xóa món này?")) {
-          dishes.splice(idx, 1);
-          saveLocalDishes();
-          renderDishesAdmin(document.getElementById("search-dish").value);
-        }
-      };
-      li.appendChild(cb);
-      li.appendChild(name);
-      if (d.img) li.appendChild(img);
-      li.appendChild(file);
-      li.appendChild(btnImg);
-      li.appendChild(btnDel);
-      ul.appendChild(li);
-    });
-    wrap.appendChild(h);
-    wrap.appendChild(ul);
-    listEl.appendChild(wrap);
-  });
-  // Danh sách món hôm nay
-  todayDishes = dishes.filter(d => d.selected);
-  todayDishes.forEach((d, i) => {
-    var li = document.createElement("li");
-    li.textContent = (i+1) + ". " + d.name;
-    todayEl.appendChild(li);
-  });
-}
-function toggleAccordion(headerEl) {
-  var content = headerEl.nextElementSibling;
-  if (content.style.display === "block") {
-    content.style.display = "none";
-    headerEl.querySelector('.arrow').innerHTML = "&#9660;";
-  } else {
-    content.style.display = "block";
-    headerEl.querySelector('.arrow').innerHTML = "&#9650;";
-  }
-}
+function uid(prefix='id'){ return prefix + Math.random().toString(36).slice(2,9); }
 
-// Xử lý ảnh (nén, cắt)
-function updateDishImage(index, input) {
-  var file = input.files[0];
-  if (!file) return;
-  processImageToCanvas(file, function(dataUrl) {
-    dishes[index].img = dataUrl;
-    saveLocalDishes();
-    renderDishesAdmin(document.getElementById("search-dish").value);
-  });
-}
-function processImageToCanvas(file, cb) {
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      var w = img.width, h = img.height;
-      var r = 4/3, tw = w, th = Math.round(w/r);
-      if (th > h) { th = h; tw = Math.round(h*r); }
-      var sx = (w-tw)/2, sy = (h-th)/2;
-      var canvas = document.createElement("canvas");
-      canvas.width = 1200; canvas.height = 900;
-      var ctx = canvas.getContext("2d");
-      ctx.drawImage(img, sx, sy, tw, th, 0, 0, 1200, 900);
-      cb(canvas.toDataURL("image/jpeg", 0.9));
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
+/* ---------------- Menu Page ---------------- */
+function initMenuPage(){
+  const root = document.getElementById('menu-list');
+  const clockEl = document.getElementById('menu-clock');
+  const qr = document.getElementById('menu-qr');
+  const preview = document.getElementById('hover-preview');
+  const previewImg = preview ? preview.querySelector('img') : null;
 
-// Thêm món mới
-function addDishFormSubmit(e) {
-  e.preventDefault();
-  var name = sanitizeInput(document.getElementById("dish-name").value);
-  var group = document.getElementById("dish-group").value;
-  var file = document.getElementById("dish-img").files[0];
-  if (!name) return alert("Thiếu tên món");
-  var add = function(imgData) {
-    dishes.push({ name: name, img: imgData, group: normalizeGroup(group), selected: false });
-    saveLocalDishes();
-    renderDishesAdmin("");
-    document.getElementById("add-dish-form").reset();
-  };
-  if (file) processImageToCanvas(file, add);
-  else add("");
-}
-
-// Lưu menu hôm nay
-function saveTodayMenu() {
-  todayDishes = dishes.filter(d => d.selected);
-  saveLocalToday();
-  alert("Đã lưu menu hôm nay!");
-}
-
-// Quản lý blog (admin)
-function renderPostsAdmin() {
-  var adminPosts = document.getElementById("admin-posts");
-  adminPosts.innerHTML = "";
-  posts.slice().reverse().forEach(function(p) {
-    var div = document.createElement("div");
-    div.className = "blog-post";
-    var html = "<h3>" + sanitizeInput(p.title) + "</h3>";
-    if (p.img) {
-      html += "<img src='" + p.img + "' alt=''>";
-    }
-    html += "<p>" + sanitizeInput(p.content) + "</p>";
-    div.innerHTML = html;
-    adminPosts.appendChild(div);
-  });
-}
-function addPostFormSubmit(e) {
-  e.preventDefault();
-  var title = sanitizeInput(document.getElementById("post-title").value);
-  var content = sanitizeInput(document.getElementById("post-content").value);
-  var file = document.getElementById("post-img").files[0];
-  if (!title || !content) return alert("Thiếu tiêu đề hoặc nội dung");
-  var addPost = function(imgData) {
-    posts.push({ title: title, content: content, img: imgData });
-    saveLocalPosts();
-    renderPostsAdmin();
-    document.getElementById("add-post-form").reset();
-  };
-  if (file) processImageToCanvas(file, addPost);
-  else addPost("");
-}
-
-// Xử lý đăng nhập admin
-function isAdminLogged() {
-  var s = JSON.parse(localStorage.getItem(LS_ADMIN) || "{}");
-  return s.pwd === "123" && s.expiry > Date.now();
-}
-function setAdminLogged() {
-  localStorage.setItem(LS_ADMIN, JSON.stringify({ pwd: "123", expiry: Date.now() + 7*86400*1000 }));
-}
-function checkLogin() {
-  if (document.getElementById("admin-pass").value === "123") {
-    setAdminLogged();
-    document.getElementById("login-section").style.display = "none";
-    document.getElementById("admin-layout").style.display = "flex";
-    loadAdmin();
-  } else {
-    document.getElementById("login-status").textContent = "Sai mật khẩu";
-  }
-}
-window.checkLogin = checkLogin;
-
-function loadAdmin() {
-  renderDishesAdmin();
-  renderPostsAdmin();
-  document.getElementById("search-dish").addEventListener("input", function() {
-    renderDishesAdmin(this.value);
-  });
-  document.getElementById("reset-selection").onclick = function() {
-    dishes.forEach(d => d.selected = false);
-    saveLocalDishes();
-    renderDishesAdmin("");
-  };
-  document.getElementById("save-menu").onclick = saveTodayMenu;
-  document.getElementById("add-dish-form").onsubmit = addDishFormSubmit;
-  document.getElementById("add-post-form").onsubmit = addPostFormSubmit;
-}
-
-// Khởi tạo trang
-(function init() {
-  // Nếu ở trang admin
-  if (document.getElementById("admin-layout")) {
-    if (isAdminLogged()) {
-      document.getElementById("login-section").style.display = "none";
-      document.getElementById("admin-layout").style.display = "flex";
-      loadAdmin();
-    }
-  }
-  // Nếu ở trang blog
-  var blogList = document.getElementById("blog-list");
-  if (blogList) {
-    posts.slice().reverse().forEach(function(p) {
-      var div = document.createElement("div");
-      div.className = "blog-post";
-      var html = "<h3>" + sanitizeInput(p.title) + "</h3>";
-      if (p.img) {
-        html += "<img src='" + p.img + "' alt=''>";
-      }
-      html += "<p>" + sanitizeInput(p.content) + "</p>";
-      div.innerHTML = html;
-      blogList.appendChild(div);
-    });
-  }
-  // Nếu ở trang menu
-  var menuSection = document.getElementById("menu-list");
-  if (menuSection) {
-    // Đồng hồ thời gian thực
-    setInterval(function() {
-      var now = new Date();
-      var clockEl = document.getElementById("realtime-clock");
-      if (clockEl) clockEl.textContent = now.toLocaleString();
-    }, 1000);
-    // Xóa thông báo tải
-    var h2 = menuSection.querySelector("h2");
-    if (h2) h2.remove();
-    var ul = document.createElement("ul");
-    menuSection.appendChild(ul);
-    var preview = document.getElementById("hover-preview");
-    preview.innerHTML = "";
-    todayDishes = JSON.parse(localStorage.getItem(LS_TODAY)) || [];
-    if (todayDishes.length === 0) {
-      ul.innerHTML = "<h2>Chưa có menu hôm nay</h2>";
+  function renderList(){
+    root.innerHTML = '';
+    if(!TODAY_ITEMS || TODAY_ITEMS.length===0){
+      root.innerHTML = '<p class="text-muted">Chưa có thực đơn hôm nay.</p>';
     } else {
-      todayDishes.forEach(function(d) {
-        var li = document.createElement("li");
-        li.className = "dish-entry";
-        var span = document.createElement("span");
-        span.className = "menu-name";
-        span.textContent = d.name;
-        li.appendChild(span);
-        if (d.img) {
-          var img = document.createElement("img");
-          img.className = "dish-photo";
-          img.src = d.img;
-          img.style.display = "none";
-          li.appendChild(img);
-          // Hover (PC)
-          span.addEventListener("mousemove", function(e) {
-            if (!window.matchMedia("(max-width: 768px)").matches) {
-              preview.style.left = (e.clientX + 20) + "px";
-              preview.style.top = (e.clientY + 20) + "px";
-            }
-          });
-          span.addEventListener("mouseenter", function() {
-            if (d.img && !window.matchMedia("(max-width: 768px)").matches) {
-              preview.innerHTML = "<img src='" + d.img + "'>";
-              preview.style.opacity = 1;
-            }
-          });
-          span.addEventListener("mouseleave", function() {
-            preview.style.opacity = 0;
-          });
-          // Click (mobile)
-          span.addEventListener("click", function() {
-            li.classList.toggle("open");
-            var imgElem = li.querySelector(".dish-photo");
-            if (imgElem) {
-              imgElem.style.display = (imgElem.style.display === "block") ? "none" : "block";
-            }
-          });
-        }
+      const ul = document.createElement('ul'); ul.className='menu-text-list';
+      TODAY_ITEMS.forEach((d,i)=>{
+        const li = document.createElement('li');
+        const idx = document.createElement('div'); idx.className='idx'; idx.textContent=(i+1);
+        const name = document.createElement('div'); name.className='name'; name.textContent = d.name;
+        li.appendChild(idx); li.appendChild(name);
+
+        li.addEventListener('mouseenter', (ev)=>{
+          if(!d.img){ preview.style.opacity = 0; return; }
+          previewImg.src = d.img;
+          preview.style.opacity = 1; preview.style.transform = 'translateY(0) scale(1)';
+          const x = Math.min(window.innerWidth - 320, ev.clientX + 18);
+          const y = Math.min(window.innerHeight - 220, ev.clientY + 12);
+          preview.style.left = x + 'px'; preview.style.top = y + 'px';
+        });
+        li.addEventListener('mousemove', (ev)=>{
+          if(!d.img) return;
+          const x = Math.min(window.innerWidth - 320, ev.clientX + 18);
+          const y = Math.min(window.innerHeight - 220, ev.clientY + 12);
+          preview.style.left = x + 'px'; preview.style.top = y + 'px';
+        });
+        li.addEventListener('mouseleave', ()=>{ preview.style.opacity = 0; });
+
+        li.addEventListener('click', ()=>{
+          if(!d.img) return;
+          const w = window.open('','_blank'); w.document.write(`<img src="${d.img}" style="max-width:100%;height:auto">`);
+        });
+
         ul.appendChild(li);
       });
-      // Tạo mã QR cho Zalo (theo hướng dẫn)
-      new QRious({
-        element: document.getElementById("qr-code"),
-        value: "https://zalo.me/0902032188",
-        size: 160,
-        background: "white"
-      });
+      root.appendChild(ul);
     }
+    if(qr) qr.src = 'https://quickchart.io/chart?cht=qr&chs=160x160&chl=' + encodeURIComponent(location.href);
+    if(clockEl) clockEl.textContent = 'Thực đơn hôm nay — ' + new Date().toLocaleString();
   }
-})();
+
+  if(!unsubToday) unsubToday = subscribeToToday((items)=>{ TODAY_ITEMS = items; renderList(); });
+  if(!unsubDishes) unsubDishes = subscribeToDishes((arr)=>{ ALL_DISHES = arr; });
+
+  renderList();
+  setInterval(()=>{ if(clockEl) clockEl.textContent = 'Thực đơn hôm nay — ' + new Date().toLocaleString(); },1000);
+}
+
+/* ---------------- Blog Page ---------------- */
+function initBlogPage(){
+  const root = document.getElementById('blog-list');
+  function render(){
+    root.innerHTML = '';
+    if(!ALL_POSTS || ALL_POSTS.length===0){ root.innerHTML = '<p class="text-muted">Chưa có bài viết.</p>'; return; }
+    ALL_POSTS.forEach(p=>{
+      const box = document.createElement('div'); box.className='post';
+      const img = document.createElement('img'); img.loading='lazy'; img.alt = p.title; img.src = p.img || PLACEHOLDER_POST;
+      const content = document.createElement('div');
+      const h = document.createElement('h3'); h.textContent = p.title;
+      const time = document.createElement('div'); time.className='text-muted'; time.textContent = new Date(p.date).toLocaleString();
+      const para = document.createElement('p'); para.textContent = p.content;
+      content.appendChild(h); content.appendChild(time); content.appendChild(para);
+      box.appendChild(img); box.appendChild(content);
+      root.appendChild(box);
+    });
+  }
+
+  if(!unsubPosts) unsubPosts = subscribeToPosts((posts)=>{ ALL_POSTS = posts; render(); });
+  render();
+}
+
+/* ---------------- Contact Page ---------------- */
+function initContactPage(){
+  const btn = document.getElementById('btn-directions');
+  const dest = encodeURIComponent('17 Phố Muối, Phường Tam Thanh, TP. Lạng Sơn');
+  if(btn){
+    btn.addEventListener('click', ()=>{
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(pos=>{
+          const lat = pos.coords.latitude, lng = pos.coords.longitude;
+          const url = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${dest}`;
+          window.open(url,'_blank');
+        }, ()=>{
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+          window.open(url,'_blank');
+        }, {timeout:10000});
+      } else {
+        const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
+        window.open(url,'_blank');
+      }
+    });
+  }
+}
+
+/* ---------------- Admin Page ---------------- */
+async function initAdminPage(){
+  const dishContainer = document.getElementById('dish-list');
+  const todayListEl = document.getElementById('today-dishes');
+  const addForm = document.getElementById('add-dish-form');
+  const saveMenuBtn = document.getElementById('save-menu');
+  const resetBtn = document.getElementById('reset-selection');
+  const searchInput = document.getElementById('search-dish');
+
+  if(!unsubDishes) unsubDishes = subscribeToDishes((arr)=>{ ALL_DISHES = arr; renderGroups(searchInput ? searchInput.value : ''); renderToday(); });
+  if(!unsubToday) unsubToday = subscribeToToday((items)=>{ TODAY_ITEMS = items; renderToday(); });
+  if(!unsubPosts) unsubPosts = subscribeToPosts((posts)=>{ ALL_POSTS = posts; renderAdminPosts(); });
+
+  const GROUPS = ['Gà','Bò','Cá','Lợn','Rau','Đậu','Trứng','Cơm','Chay','Khác'];
+
+  function renderGroups(filter=''){
+    dishContainer.innerHTML = '';
+    GROUPS.forEach(g=>{
+      const items = ALL_DISHES.filter(d => d.group===g && d.name.toLowerCase().includes(filter.toLowerCase()));
+      if(items.length===0) return;
+      const wrap = document.createElement('div'); wrap.className='accordion card';
+      const head = document.createElement('div'); head.className='group-header'; head.textContent = g + ' ('+items.length+')';
+      const arrow = document.createElement('div'); arrow.textContent = '+';
+      head.appendChild(arrow);
+      const list = document.createElement('div'); list.className='group-list';
+      items.forEach(d=>{
+        const row = document.createElement('div'); row.className='dish-row';
+        const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!d.selected;
+        cb.addEventListener('change', async ()=>{ await updateDishRemote(d.id, { selected: cb.checked }); });
+        const name = document.createElement('div'); name.textContent = d.name; name.style.flex='1';
+        const btnImg = document.createElement('button'); btnImg.textContent='Ảnh'; btnImg.className='small-btn';
+        const fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
+        fileInput.addEventListener('change', async ()=>{ const f = fileInput.files[0]; if(!f) return; const url = await uploadImageFile(f, 'dishes'); await updateDishRemote(d.id, { img: url }); });
+        btnImg.addEventListener('click', ()=> fileInput.click());
+        const btnDel = document.createElement('button'); btnDel.textContent='Xóa'; btnDel.className='small-btn';
+        btnDel.addEventListener('click', async ()=>{ if(!confirm('Xóa món "'+d.name+'" ?')) return; await deleteDishRemote(d.id); });
+        row.appendChild(cb); row.appendChild(name); row.appendChild(btnImg); row.appendChild(fileInput); row.appendChild(btnDel);
+        list.appendChild(row);
+      });
+      head.addEventListener('click', ()=>{ list.classList.toggle('active'); arrow.textContent = list.classList.contains('active') ? '−' : '+'; });
+      wrap.appendChild(head); wrap.appendChild(list);
+      dishContainer.appendChild(wrap);
+    });
+  }
+
+  function renderToday(){
+    todayListEl.innerHTML = '';
+    if(!TODAY_ITEMS || TODAY_ITEMS.length===0){ todayListEl.innerHTML = '<li class="text-muted">Chưa có món được chọn.</li>'; return; }
+    TODAY_ITEMS.forEach((d,i)=>{
+      const li = document.createElement('li');
+      li.textContent = (i+1) + '. ' + d.name;
+      const rem = document.createElement('button'); rem.textContent='Bỏ'; rem.className='small-btn'; rem.style.marginLeft='8px';
+      rem.addEventListener('click', async ()=> { await updateDishRemote(d.id, { selected: false }); });
+      li.appendChild(rem);
+      todayListEl.appendChild(li);
+    });
+  }
+
+  addForm.addEventListener('submit', async (e)=>{ 
+    e.preventDefault(); 
+    const name = document.getElementById('dish-name').value.trim(); 
+    const group = document.getElementById('dish-group').value; 
+    const file = document.getElementById('dish-img').files[0]; 
+    if(!name){ alert('Nhập tên món'); return; } 
+    let imgUrl = ''; 
+    if(file) imgUrl = await uploadImageFile(file, 'dishes'); 
+    await addDishRemote({ name, group, img: imgUrl, selected: false }); 
+    addForm.reset(); 
+    alert('Đã thêm món'); 
+  });
+
+  saveMenuBtn.addEventListener('click', async ()=>{ 
+    const items = ALL_DISHES.filter(d=>d.selected).map(d=>({ id:d.id, name:d.name, group:d.group, img:d.img || '' })); 
+    await saveTodayMenuRemote(items); 
+    alert('Đã lưu thực đơn hôm nay!'); 
+  });
+
+  resetBtn.addEventListener('click', async ()=>{ 
+    if(!confirm('Bỏ chọn tất cả?')) return; 
+    const updates = ALL_DISHES.map(d => updateDishRemote(d.id, { selected: false }).catch(()=>{})); 
+    await Promise.all(updates); 
+    alert('Đã bỏ chọn tất cả.'); 
+  });
+
+  searchInput.addEventListener('input', (e)=> renderGroups(e.target.value));
+
+  /* Admin posts */
+  const addPostForm = document.getElementById('add-post-form');
+  const adminPostList = document.getElementById('admin-posts');
+
+  function renderAdminPosts(){
+    adminPostList.innerHTML = '';
+    if(!ALL_POSTS || ALL_POSTS.length===0){ adminPostList.innerHTML = '<div class="text-muted">Chưa có bài viết.</div>'; return; }
+    ALL_POSTS.forEach(p=>{
+      const div = document.createElement('div'); div.className='card'; div.style.padding='10px'; div.style.marginBottom='8px';
+      const h = document.createElement('h4'); h.textContent = p.title;
+      const time = document.createElement('div'); time.className='text-muted'; time.textContent = new Date(p.date).toLocaleString();
+      const para = document.createElement('p'); para.textContent = p.content;
+      const del = document.createElement('button'); del.textContent='Xóa'; del.className='small-btn';
+      del.addEventListener('click', async ()=>{ if(confirm('Xóa bài viết này?')) await deletePostRemote(p.id); });
+      div.appendChild(h); div.appendChild(time);
+      if(p.img){ const im = document.createElement('img'); im.src = p.img; im.style.width='100%'; im.style.maxHeight='160px'; im.style.objectFit='cover'; im.style.borderRadius='8px'; div.appendChild(im); }
+      div.appendChild(para); div.appendChild(del);
+      adminPostList.appendChild(div);
+    });
+  }
+
+  addPostForm.addEventListener('submit', async (e)=>{ 
+    e.preventDefault(); 
+    const title = document.getElementById('post-title').value.trim(); 
+    const content = document.getElementById('post-content').value.trim(); 
+    const file = document.getElementById('post-img').files[0]; 
+    if(!title || !content){ alert('Nhập đầy đủ tiêu đề và nội dung'); return; } 
+    let imgUrl = ''; 
+    if(file) imgUrl = await uploadImageFile(file, 'posts'); 
+    await addPostRemote({ title, content, img: imgUrl, date: new Date().toISOString() }); 
+    addPostForm.reset(); 
+    alert('Đã đăng bài!'); 
+  });
+
+  renderGroups('');
+  renderToday();
+  renderAdminPosts();
+}
+
+/* ---------------- Import 66 món default ---------------- */
+function setupImportButton(){
+  const btn = document.getElementById('import-defaults');
+  const status = document.getElementById('import-status');
+  if(!btn) return;
+
+  const DEFAULT_ITEMS = [
+    // Nhóm Gà (10)
+    {name:'Ức gà luộc', group:'Gà'},
+    {name:'Đùi gà xào sả ớt', group:'Gà'},
+    {name:'Gà nướng (đùi + má đùi)', group:'Gà'},
+    {name:'Gà luộc (đùi + má đùi)', group:'Gà'},
+    {name:'Ức gà xào ớt xanh đỏ', group:'Gà'},
+    {name:'Gà xào nấm', group:'Gà'},
+    {name:'Gà khô gừng nghệ', group:'Gà'},
+    {name:'Gà xào dứa', group:'Gà'},
+    {name:'Ức gà quấn lá lốt', group:'Gà'},
+    {name:'Mọc gà nấm hương', group:'Gà'},
+    // Nhóm Bò (6)
+    {name:'Bò xào nấm đùi gà', group:'Bò'},
+    {name:'Bò xào nấm hải sản', group:'Bò'},
+    {name:'Bò xào hoa thiên lý', group:'Bò'},
+    {name:'Bò xào giá', group:'Bò'},
+    {name:'Bò kho hoa quả', group:'Bò'},
+    {name:'Bò xào nấm hương tươi', group:'Bò'},
+    // Nhóm Tôm (3)
+    {name:'Tôm hấp', group:'Tôm'},
+    {name:'Tôm rang ba chỉ', group:'Tôm'},
+    {name:'Tôm rim', group:'Tôm'},
+    // Nhóm Cá (8)
+    {name:'Cá hấp', group:'Cá'},
+    {name:'Cá chiên', group:'Cá'},
+    {name:'Cá nướng', group:'Cá'},
+    {name:'Cá sông chao giòn', group:'Cá'},
+    {name:'Cá thu sốt cà chua', group:'Cá'},
+    {name:'Cá thu om tiêu', group:'Cá'},
+    {name:'Cá basa kho tiêu', group:'Cá'},
+    {name:'Cá kho dưa', group:'Cá'},
+    // Nhóm Thịt Lợn (7)
+    {name:'Thịt băm rang', group:'Lợn'},
+    {name:'Thịt ba chỉ rang tôm', group:'Lợn'},
+    {name:'Thịt lợn kho dừa', group:'Lợn'},
+    {name:'Thịt lợn om mắc mật', group:'Lợn'},
+    {name:'Thịt lợn luộc', group:'Lợn'},
+    {name:'Chả sen', group:'Lợn'},
+    {name:'Chả lá lốt', group:'Lợn'},
+    // Nhóm Rau (16)
+    {name:'Súp lơ luộc', group:'Rau'},
+    {name:'Bí xanh luộc', group:'Rau'},
+    {name:'Đỗ cô ve luộc', group:'Rau'},
+    {name:'Bắp cải luộc', group:'Rau'},
+    {name:'Cà rốt luộc', group:'Rau'},
+    {name:'Củ dền luộc', group:'Rau'},
+    {name:'Xu hào luộc', group:'Rau'},
+    {name:'Cải chíp luộc', group:'Rau'},
+    {name:'Măng xào', group:'Rau'},
+    {name:'Nấm đùi gà om', group:'Rau'},
+    {name:'Nấm bao tử', group:'Rau'},
+    {name:'Mướp đắng xào', group:'Rau'},
+    {name:'Củ cải xào', group:'Rau'},
+    {name:'Mướp đắng xào trứng', group:'Rau'},
+    {name:'Mướp hương luộc', group:'Rau'},
+    {name:'Mướp hương xào giá đỗ', group:'Rau'},
+    // Nhóm Đậu (3)
+    {name:'Đậu cà chua', group:'Đậu'},
+    {name:'Đậu tẩm hành', group:'Đậu'},
+    {name:'Đậu sống', group:'Đậu'},
+    // Nhóm Trứng (4)
+    {name:'Trứng luộc', group:'Trứng'},
+    {name:'Trứng rán cuốn rong biển', group:'Trứng'},
+    {name:'Trứng rán hành', group:'Trứng'},
+    {name:'Trứng rán', group:'Trứng'},
+    // Nhóm Cơm (3)
+    {name:'Cơm trắng gạo Nhật', group:'Cơm'},
+    {name:'Cơm lứt tổng hợp', group:'Cơm'},
+    {name:'Cơm lứt + hạt dinh dưỡng', group:'Cơm'},
+    // Nhóm Món Chay (6)
+    {name:'Sườn non chay', group:'Chay'},
+    {name:'Gà chay', group:'Chay'},
+    {name:'Bò chay', group:'Chay'},
+    {name:'Tảo xoắn', group:'Chay'},
+    {name:'Lạc rang', group:'Chay'},
+    {name:'Muối vừng', group:'Chay'}
+  ];
+
+  btn.addEventListener('click', async ()=>{
+    if(!confirm('Xác nhận import 66 món mặc định vào Firestore? (sẽ không trùng lặp nếu đã có tên giống)')) return;
+    btn.disabled = true;
+    status.textContent = 'Đang import...';
+    let added = 0, skipped = 0;
+    for(let i=0;i<DEFAULT_ITEMS.length;i++){
+      const it = DEFAULT_ITEMS[i];
+      try{
+        // check existing by exact name
+        const q = await FB.db.collection('dishes').where('name','==', it.name).get();
+        if(!q.empty){ skipped++; continue; }
+        await addDishRemote({ name: it.name, group: it.group, img: '', selected: false });
+        added++;
+        status.textContent = `Đã import ${added} / ${DEFAULT_ITEMS.length} ...`;
+        await new Promise(r=>setTimeout(r,120)); // small throttle so UI updates
+      }catch(err){
+        console.error('Import error for', it.name, err);
+      }
+    }
+    status.textContent = `Hoàn tất — Thêm ${added}, Bỏ qua ${skipped}.`;
+    btn.disabled = false;
+    // After import, UI should update via realtime subscriptions
+    setTimeout(()=>{ if(window.initAdminPage) initAdminPage(); }, 500);
+  });
+}
+
+/* -------------------- global init based on DOM -------------------- */
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(document.getElementById('menu-list')) initMenuPage();
+  if(document.getElementById('blog-list')) initBlogPage();
+  if(document.getElementById('contact-map')) initContactPage();
+  // initAdminPage called after password prompt in admin.html
+});

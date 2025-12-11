@@ -1,35 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog - Phương Nhung Healthy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Blog — Phuong Nhung Healthy Food</title>
+  <meta name="description" content="Các bài viết dinh dưỡng và mẹo ăn uống lành mạnh từ Phuong Nhung Healthy Food.">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-api.js"></script>
 </head>
 <body>
-  <header><h1>Blog - Phương Nhung Healthy</h1></header>
-  
-  <nav class="main-nav">
-    <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu</a>
-    <a href="blog.html" class="active">Blog</a>
-    <a href="contact.html">Liên hệ</a>
-  </nav>
+  <div class="site-wrap">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="index.html"><div class="logo">PN</div><div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div></a>
+        <nav class="nav">
+          <a href="index.html">Trang chủ</a>
+          <a href="menu.html">Thực đơn</a>
+          <a href="blog.html" class="active">Blog</a>
+          <a href="contact.html">Liên hệ</a>
+          <a href="admin.html">Quản trị</a>
+        </nav>
+      </div>
+    </header>
 
-  <section class="section">
-    <h2>Bài viết mới nhất</h2>
-    <div id="blog-list"></div>
-  </section>
+    <main class="content container">
+      <div class="card">
+        <h1>Blog</h1>
+        <div id="blog-list" style="margin-top:12px"></div>
+      </div>
+    </main>
 
-  <footer>
-    <p>© 2025 Phương Nhung Healthy • <a href="admin.html">Quản trị</a></p>
-  </footer>
-
-  <script src="script.js" defer></script>
+    <footer class="footer">
+      <div class="footer-inner">
+        <div><strong>Phuong Nhung Healthy Food</strong><br><small class="text-muted">© 2025</small></div>
+        <div>Giờ mở cửa: 10:00 - 19:30 • <a href="tel:+84902032188">0902.032.188</a></div>
+      </div>
+    </footer>
+  </div>
 
   <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank">Z</a>
+    <a class="chat-btn chat-mes" href="https://m.me/phuongnhunghealthy" target="_blank">M</a>
+    <a class="chat-btn chat-call" href="tel:+84902032188">📞</a>
   </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

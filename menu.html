@@ -1,47 +1,74 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta property="og:title" content="Menu - Phương Nhung Healthy">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Phương Nhung Healthy Bites">
-  <meta name="description" content="Phương Nhung Healthy Bites - Eat Clean • Healthy • Balance. Menu cập nhật theo ngày, xem nhanh và đặt món qua Zalo/Messenger.">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Menu - Phương Nhung Healthy</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Thực đơn hôm nay — Phuong Nhung Healthy Food</title>
+  <meta name="description" content="Thực đơn hôm nay tại Phuong Nhung Healthy Food. Bạn tự chọn món ăn theo sở thích. Giá thay đổi theo thị trường và khẩu phần bạn chọn.">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="firebase-api.js"></script>
 </head>
 <body>
-  <header>
-    <h1>Menu</h1>
-    <p id="realtime-clock"></p>
-  </header>
-  
-  <nav class="main-nav">
-    <a href="index.html">Trang chủ</a>
-    <a href="menu.html">Menu</a>
-    <a href="blog.html">Blog</a>
-    <a href="contact.html">Liên hệ</a>
-  </nav>
+  <div class="site-wrap">
+    <header class="header">
+      <div class="header-inner">
+        <a class="brand" href="index.html"><div class="logo">PN</div><div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div></a>
+        <nav class="nav">
+          <a href="index.html">Trang chủ</a>
+          <a href="menu.html" class="active">Thực đơn</a>
+          <a href="blog.html">Blog</a>
+          <a href="contact.html">Liên hệ</a>
+          <a href="admin.html">Quản trị</a>
+        </nav>
+      </div>
+    </header>
 
-  <section class="section" id="menu-list">
-    <div id="hover-preview" class="hover-preview" aria-hidden="true"></div>
-    <h2>Đang tải menu...</h2>
-  </section>
+    <main class="content container">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <h1>Thực đơn hôm nay</h1>
+          <div class="text-muted" id="menu-clock">—</div>
+        </div>
 
-  <div style="text-align:center;margin:20px;">
-    <canvas id="qr-code"></canvas>
+        <p style="margin-top:8px;font-weight:600;color:#2b2b2b">
+          Bạn tự chọn món ăn theo sở thích của bạn. Giá thay đổi theo thị trường và khẩu phần bạn chọn.
+        </p>
+
+        <div id="menu-list" style="margin-top:12px"></div>
+
+        <p class="note" style="margin-top:12px">Quét QR để mở menu trên điện thoại:</p>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:12px;">
+          <img id="menu-qr" src="" alt="QR menu" width="160" height="160">
+          <div class="text-muted">Scan mã QR để chia sẻ thực đơn hoặc đặt món nhanh.</div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        <div>
+          <strong>Phuong Nhung Healthy Food</strong><br><small class="text-muted">© 2025</small>
+        </div>
+        <div>
+          <div>Giờ mở cửa: 10:00 - 19:30</div>
+          <div><a href="tel:+84902032188">0902.032.188</a> • <a href="https://www.facebook.com/phuongnhunghealthy" target="_blank">Facebook</a></div>
+        </div>
+      </div>
+    </footer>
   </div>
 
-  <footer>
-    <p>© 2025 Phương Nhung Healthy Bites • <a href="admin.html">Quản trị</a></p>
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
-  <script src="script.js" defer></script>
+  <div id="hover-preview" class="hover-preview" aria-hidden="true"><img src="" alt=""></div>
 
   <div class="chat-fab">
-    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank" rel="noopener" aria-label="Zalo"></a>
-    <a class="chat-btn chat-mes" href="https://m.me/nhung.ba.18" target="_blank" rel="noopener" aria-label="Messenger"></a>
+    <a class="chat-btn chat-zalo" href="https://zalo.me/0902032188" target="_blank">Z</a>
+    <a class="chat-btn chat-mes" href="https://m.me/phuongnhunghealthy" target="_blank">M</a>
+    <a class="chat-btn chat-call" href="tel:+84902032188">📞</a>
   </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
