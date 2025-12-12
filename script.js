@@ -1,359 +1,367 @@
-// script.js (admin + site logic, with Import 66 món integration)
+/* script.js
+   Admin for Phuong Nhung Healthy Food
+   - Uses Cloudinary unsigned upload preset
+   - LocalStorage fallback (default). Optional Firestore enabled if put firebase code in admin.html
+*/
 
-/* placeholders */
-const PLACEHOLDER_FOOD = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="%23f2f6f2"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%238b9f8b" font-size="20">Ảnh món đang cập nhật</text></svg>';
-const PLACEHOLDER_POST = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="100%" height="100%" fill="%23f7f7f7"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="%23999999" font-size="20">Ảnh bài viết</text></svg>';
+/* ========== CONFIG ========== */
+// IMPORTANT: nếu cloud name/preset khác, sửa ở đây:
+const CLOUD_NAME = 'duwdobplq';            // cloud name (from Cloudinary console)
+const UPLOAD_PRESET = 'pn_unsigned';      // unsigned preset name (you saved)
+const CLOUD_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
-let ALL_DISHES = [];
-let TODAY_ITEMS = [];
-let ALL_POSTS = [];
+/* ========== Data model (default 66 items) ========== */
+/* Lão gia đã cung cấp danh sách 66 món — con import sẵn dưới đây */
+const DEFAULT_DISHES = [
+  // Nhóm Gà (10)
+  { id:'d1', group:'Gà', name:'Ức gà luộc', img:'', selected:false },
+  { id:'d2', group:'Gà', name:'Đùi gà xào sả ớt', img:'', selected:false },
+  { id:'d3', group:'Gà', name:'Gà nướng (đùi + má đùi)', img:'', selected:false },
+  { id:'d4', group:'Gà', name:'Gà luộc (đùi + má đùi)', img:'', selected:false },
+  { id:'d5', group:'Gà', name:'Ức gà xào ớt xanh đỏ', img:'', selected:false },
+  { id:'d6', group:'Gà', name:'Gà xào nấm', img:'', selected:false },
+  { id:'d7', group:'Gà', name:'Gà khô gừng nghệ', img:'', selected:false },
+  { id:'d8', group:'Gà', name:'Gà xào dứa', img:'', selected:false },
+  { id:'d9', group:'Gà', name:'Ức gà quấn lá lốt', img:'', selected:false },
+  { id:'d10', group:'Gà', name:'Mọc gà nấm hương', img:'', selected:false },
 
-let unsubDishes = null, unsubToday = null, unsubPosts = null;
+  // Bò (6)
+  { id:'d11', group:'Bò', name:'Bò xào nấm đùi gà', img:'', selected:false },
+  { id:'d12', group:'Bò', name:'Bò xào nấm hải sản', img:'', selected:false },
+  { id:'d13', group:'Bò', name:'Bò xào hoa thiên lý', img:'', selected:false },
+  { id:'d14', group:'Bò', name:'Bò xào giá', img:'', selected:false },
+  { id:'d15', group:'Bò', name:'Bò kho hoa quả', img:'', selected:false },
+  { id:'d16', group:'Bò', name:'Bò xào nấm hương tươi', img:'', selected:false },
 
-function uid(prefix='id'){ return prefix + Math.random().toString(36).slice(2,9); }
+  // Tôm (3)
+  { id:'d17', group:'Tôm', name:'Tôm hấp', img:'', selected:false },
+  { id:'d18', group:'Tôm', name:'Tôm rang ba chỉ', img:'', selected:false },
+  { id:'d19', group:'Tôm', name:'Tôm rim', img:'', selected:false },
 
-/* ---------------- Menu Page ---------------- */
-function initMenuPage(){
-  const root = document.getElementById('menu-list');
-  const clockEl = document.getElementById('menu-clock');
-  const qr = document.getElementById('menu-qr');
-  const preview = document.getElementById('hover-preview');
-  const previewImg = preview ? preview.querySelector('img') : null;
+  // Cá (8)
+  { id:'d20', group:'Cá', name:'Cá hấp', img:'', selected:false },
+  { id:'d21', group:'Cá', name:'Cá chiên', img:'', selected:false },
+  { id:'d22', group:'Cá', name:'Cá nướng', img:'', selected:false },
+  { id:'d23', group:'Cá', name:'Cá sông chao giòn', img:'', selected:false },
+  { id:'d24', group:'Cá', name:'Cá thu sốt cà chua', img:'', selected:false },
+  { id:'d25', group:'Cá', name:'Cá thu om tiêu', img:'', selected:false },
+  { id:'d26', group:'Cá', name:'Cá basa kho tiêu', img:'', selected:false },
+  { id:'d27', group:'Cá', name:'Cá kho dưa', img:'', selected:false },
 
-  function renderList(){
-    root.innerHTML = '';
-    if(!TODAY_ITEMS || TODAY_ITEMS.length===0){
-      root.innerHTML = '<p class="text-muted">Chưa có thực đơn hôm nay.</p>';
-    } else {
-      const ul = document.createElement('ul'); ul.className='menu-text-list';
-      TODAY_ITEMS.forEach((d,i)=>{
-        const li = document.createElement('li');
-        const idx = document.createElement('div'); idx.className='idx'; idx.textContent=(i+1);
-        const name = document.createElement('div'); name.className='name'; name.textContent = d.name;
-        li.appendChild(idx); li.appendChild(name);
+  // Thịt Lợn (7)
+  { id:'d28', group:'Thịt Lợn', name:'Thịt băm rang', img:'', selected:false },
+  { id:'d29', group:'Thịt Lợn', name:'Thịt ba chỉ rang tôm', img:'', selected:false },
+  { id:'d30', group:'Thịt Lợn', name:'Thịt lợn kho dừa', img:'', selected:false },
+  { id:'d31', group:'Thịt Lợn', name:'Thịt lợn om mắc mật', img:'', selected:false },
+  { id:'d32', group:'Thịt Lợn', name:'Thịt lợn luộc', img:'', selected:false },
+  { id:'d33', group:'Thịt Lợn', name:'Chả sen', img:'', selected:false },
+  { id:'d34', group:'Thịt Lợn', name:'Chả lá lốt', img:'', selected:false },
 
-        li.addEventListener('mouseenter', (ev)=>{
-          if(!d.img){ preview.style.opacity = 0; return; }
-          previewImg.src = d.img;
-          preview.style.opacity = 1; preview.style.transform = 'translateY(0) scale(1)';
-          const x = Math.min(window.innerWidth - 320, ev.clientX + 18);
-          const y = Math.min(window.innerHeight - 220, ev.clientY + 12);
-          preview.style.left = x + 'px'; preview.style.top = y + 'px';
-        });
-        li.addEventListener('mousemove', (ev)=>{
-          if(!d.img) return;
-          const x = Math.min(window.innerWidth - 320, ev.clientX + 18);
-          const y = Math.min(window.innerHeight - 220, ev.clientY + 12);
-          preview.style.left = x + 'px'; preview.style.top = y + 'px';
-        });
-        li.addEventListener('mouseleave', ()=>{ preview.style.opacity = 0; });
+  // Rau (16)
+  { id:'d35', group:'Rau', name:'Súp lơ luộc', img:'', selected:false },
+  { id:'d36', group:'Rau', name:'Bí xanh luộc', img:'', selected:false },
+  { id:'d37', group:'Rau', name:'Đỗ cô ve luộc', img:'', selected:false },
+  { id:'d38', group:'Rau', name:'Bắp cải luộc', img:'', selected:false },
+  { id:'d39', group:'Rau', name:'Cà rốt luộc', img:'', selected:false },
+  { id:'d40', group:'Rau', name:'Củ dền luộc', img:'', selected:false },
+  { id:'d41', group:'Rau', name:'Xu hào luộc', img:'', selected:false },
+  { id:'d42', group:'Rau', name:'Cải chíp luộc', img:'', selected:false },
+  { id:'d43', group:'Rau', name:'Măng xào', img:'', selected:false },
+  { id:'d44', group:'Rau', name:'Nấm đùi gà om', img:'', selected:false },
+  { id:'d45', group:'Rau', name:'Nấm bao tử', img:'', selected:false },
+  { id:'d46', group:'Rau', name:'Mướp đắng xào', img:'', selected:false },
+  { id:'d47', group:'Rau', name:'Củ cải xào', img:'', selected:false },
+  { id:'d48', group:'Rau', name:'Mướp đắng xào trứng', img:'', selected:false },
+  { id:'d49', group:'Rau', name:'Mướp hương luộc', img:'', selected:false },
+  { id:'d50', group:'Rau', name:'Mướp hương xào giá đỗ', img:'', selected:false },
 
-        li.addEventListener('click', ()=>{
-          if(!d.img) return;
-          const w = window.open('','_blank'); w.document.write(`<img src="${d.img}" style="max-width:100%;height:auto">`);
-        });
+  // Đậu (3)
+  { id:'d51', group:'Đậu', name:'Đậu cà chua', img:'', selected:false },
+  { id:'d52', group:'Đậu', name:'Đậu tẩm hành', img:'', selected:false },
+  { id:'d53', group:'Đậu', name:'Đậu sống', img:'', selected:false },
 
-        ul.appendChild(li);
-      });
-      root.appendChild(ul);
+  // Trứng (4)
+  { id:'d54', group:'Trứng', name:'Trứng luộc', img:'', selected:false },
+  { id:'d55', group:'Trứng', name:'Trứng rán cuốn rong biển', img:'', selected:false },
+  { id:'d56', group:'Trứng', name:'Trứng rán hành', img:'', selected:false },
+  { id:'d57', group:'Trứng', name:'Trứng rán', img:'', selected:false },
+
+  // Cơm (3)
+  { id:'d58', group:'Cơm', name:'Cơm trắng gạo Nhật', img:'', selected:false },
+  { id:'d59', group:'Cơm', name:'Cơm lứt tổng hợp', img:'', selected:false },
+  { id:'d60', group:'Cơm', name:'Cơm lứt + hạt dinh dưỡng', img:'', selected:false },
+
+  // Món Chay (6)
+  { id:'d61', group:'Món Chay', name:'Sườn non chay', img:'', selected:false },
+  { id:'d62', group:'Món Chay', name:'Gà chay', img:'', selected:false },
+  { id:'d63', group:'Món Chay', name:'Bò chay', img:'', selected:false },
+  { id:'d64', group:'Món Chay', name:'Tảo xoắn', img:'', selected:false },
+  { id:'d65', group:'Món Chay', name:'Lạc rang', img:'', selected:false },
+  { id:'d66', group:'Món Chay', name:'Muối vừng', img:'', selected:false }
+];
+
+/* ========== Storage helpers ========== */
+const STORAGE_KEY = 'pn_dishes_v1';
+const MENU_KEY = 'pn_today_menu_v1';
+const POSTS_KEY = 'pn_posts_v1';
+
+/* Save/load - default to localStorage. If Firestore (window.__FIRESTORE) provided, you can extend to sync. */
+function saveToLocal(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+function loadFromLocal(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+function saveToday(list){ localStorage.setItem(MENU_KEY, JSON.stringify(list)); }
+function loadToday(){ const r=localStorage.getItem(MENU_KEY); return r?JSON.parse(r):[]; }
+function savePosts(posts){ localStorage.setItem(POSTS_KEY, JSON.stringify(posts)); }
+function loadPosts(){ const r = localStorage.getItem(POSTS_KEY); return r?JSON.parse(r):[]; }
+
+/* ========== UI rendering ========== */
+const groupsContainer = document.getElementById('groupsContainer');
+const todayListDiv = document.getElementById('todayList');
+const saveMenuBtn = document.getElementById('saveMenu');
+const clearSelectionBtn = document.getElementById('clearSelection');
+
+let dishes = loadFromLocal() || DEFAULT_DISHES.slice();
+let today = loadToday();
+let posts = loadPosts();
+
+function groupKeys(arr){
+  const s = new Set(arr.map(d=>d.group));
+  return Array.from(s);
+}
+
+/* Render groups accordion - each group lists text items (no image shown) but has button 'Ảnh' hover enabled to view */
+function renderGroups(){
+  groupsContainer.innerHTML = '';
+  const groups = groupKeys(dishes);
+  groups.forEach(g=>{
+    const groupBox = document.createElement('div');
+    groupBox.className = 'group-box';
+    const header = document.createElement('div');
+    header.className = 'group-row';
+    header.innerHTML = `<div class="gname">${g} (<span class="small">${dishes.filter(d=>d.group===g).length}</span>)</div>
+                        <div><button class="btn" data-group="${g}">+</button></div>`;
+    groupsContainer.appendChild(header);
+
+    // list items
+    const list = document.createElement('div');
+    list.style.marginTop='8px';
+    list.style.marginBottom='12px';
+    dishes.filter(d=>d.group===g).forEach(d=>{
+      const item = document.createElement('div');
+      item.className='dish-item';
+      const left = document.createElement('div');
+      left.className='dish-left';
+      const img = document.createElement('img');
+      img.src = d.img || placeholderFor(d.name);
+      img.alt = d.name;
+      img.loading = 'lazy';
+      img.style.width='56px'; img.style.height='56px';
+      const meta = document.createElement('div');
+      meta.innerHTML = `<div class="dish-meta">${d.name}</div><div class="small">${d.group}</div>`;
+      left.appendChild(img); left.appendChild(meta);
+
+      const right = document.createElement('div');
+      right.className='controls';
+      const cb = document.createElement('input');
+      cb.type='checkbox'; cb.checked = d.selected;
+      cb.addEventListener('change', ()=>{ d.selected = cb.checked; updateTodayFromSelection(); saveToLocal(dishes); renderSelectedList(); renderGroups(); });
+      const btnImg = document.createElement('button'); btnImg.className='btn'; btnImg.textContent='Ảnh';
+      btnImg.addEventListener('click', ()=> openImageEditor(d.id));
+      const btnDel = document.createElement('button'); btnDel.className='btn'; btnDel.textContent='Xóa';
+      btnDel.addEventListener('click', ()=> { if(confirm('Xóa món này?')) { dishes = dishes.filter(x=>x.id!==d.id); saveToLocal(dishes); renderGroups(); renderSelectedList(); } });
+      right.appendChild(cb); right.appendChild(btnImg); right.appendChild(btnDel);
+
+      item.appendChild(left); item.appendChild(right);
+      list.appendChild(item);
+    });
+    groupsContainer.appendChild(list);
+  });
+}
+
+/* placeholder tiny base64 (light gray) so layout not empty */
+function placeholderFor(name){
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><rect width='100%' height='100%' fill='#f0f5f0'/><text x='50%' y='50%' font-size='18' text-anchor='middle' fill='#9aa79a' font-family='Arial' dy='.35em'>${escapeHtml(name)}</text></svg>`);
+}
+function escapeHtml(s){ return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+/* Selected list render */
+function renderSelectedList(){
+  const sel = dishes.filter(d=>d.selected);
+  const container = todayListDiv;
+  container.innerHTML = '';
+  const count = document.createElement('div'); count.className='select-count';
+  if(sel.length===0){ count.textContent = '1. Chưa có món được chọn.'; container.appendChild(count); return; }
+  const ol = document.createElement('ol');
+  sel.forEach(s=>{ const li=document.createElement('li'); li.textContent = s.name; ol.appendChild(li); });
+  container.appendChild(count);
+  container.appendChild(ol);
+
+  const btnWrap = document.createElement('div');
+  btnWrap.style.marginTop='10px';
+  const sbtn = document.createElement('button'); sbtn.className='btn green'; sbtn.textContent='💾 Lưu Menu Hôm Nay';
+  sbtn.onclick = ()=> { saveToday(sel.map(x=>x.id)); alert('Đã lưu menu hôm nay.'); saveToday(sel.map(x=>x.id)); }
+  const clear = document.createElement('button'); clear.className='btn red'; clear.textContent='Bỏ chọn tất cả';
+  clear.onclick = ()=> { if(confirm('Bỏ chọn tất cả món?')){ dishes.forEach(d=>d.selected=false); saveToLocal(dishes); renderGroups(); renderSelectedList(); } };
+  btnWrap.appendChild(sbtn); btnWrap.appendChild(clear);
+  container.appendChild(btnWrap);
+}
+
+/* update today array when checkbox toggled */
+function updateTodayFromSelection(){
+  today = dishes.filter(d=>d.selected).map(d=>d.id);
+}
+
+/* ========== add new dish & upload ========== */
+const fileInput = document.getElementById('fileInput');
+const addDishBtn = document.getElementById('addDishBtn');
+addDishBtn.addEventListener('click', async ()=>{
+  const name = document.getElementById('newName').value.trim();
+  const group = document.getElementById('newGroup').value;
+  if(!name){ alert('Nhập tên món'); return; }
+  const id = 'd' + Date.now();
+  const file = fileInput.files && fileInput.files[0];
+  let imgUrl = '';
+  if(file){
+    try{
+      const res = await uploadToCloudinary(file);
+      imgUrl = res.secure_url;
+    }catch(err){
+      console.error('Upload lỗi', err); alert('Upload ảnh lỗi, món vẫn được thêm nhưng không có ảnh.'); 
     }
-    if(qr) qr.src = 'https://quickchart.io/chart?cht=qr&chs=160x160&chl=' + encodeURIComponent(location.href);
-    if(clockEl) clockEl.textContent = 'Thực đơn hôm nay — ' + new Date().toLocaleString();
   }
-
-  if(!unsubToday) unsubToday = subscribeToToday((items)=>{ TODAY_ITEMS = items; renderList(); });
-  if(!unsubDishes) unsubDishes = subscribeToDishes((arr)=>{ ALL_DISHES = arr; });
-
-  renderList();
-  setInterval(()=>{ if(clockEl) clockEl.textContent = 'Thực đơn hôm nay — ' + new Date().toLocaleString(); },1000);
-}
-
-/* ---------------- Blog Page ---------------- */
-function initBlogPage(){
-  const root = document.getElementById('blog-list');
-  function render(){
-    root.innerHTML = '';
-    if(!ALL_POSTS || ALL_POSTS.length===0){ root.innerHTML = '<p class="text-muted">Chưa có bài viết.</p>'; return; }
-    ALL_POSTS.forEach(p=>{
-      const box = document.createElement('div'); box.className='post';
-      const img = document.createElement('img'); img.loading='lazy'; img.alt = p.title; img.src = p.img || PLACEHOLDER_POST;
-      const content = document.createElement('div');
-      const h = document.createElement('h3'); h.textContent = p.title;
-      const time = document.createElement('div'); time.className='text-muted'; time.textContent = new Date(p.date).toLocaleString();
-      const para = document.createElement('p'); para.textContent = p.content;
-      content.appendChild(h); content.appendChild(time); content.appendChild(para);
-      box.appendChild(img); box.appendChild(content);
-      root.appendChild(box);
-    });
-  }
-
-  if(!unsubPosts) unsubPosts = subscribeToPosts((posts)=>{ ALL_POSTS = posts; render(); });
-  render();
-}
-
-/* ---------------- Contact Page ---------------- */
-function initContactPage(){
-  const btn = document.getElementById('btn-directions');
-  const dest = encodeURIComponent('17 Phố Muối, Phường Tam Thanh, TP. Lạng Sơn');
-  if(btn){
-    btn.addEventListener('click', ()=>{
-      if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(pos=>{
-          const lat = pos.coords.latitude, lng = pos.coords.longitude;
-          const url = `https://www.google.com/maps/dir/?api=1&origin=${lat},${lng}&destination=${dest}`;
-          window.open(url,'_blank');
-        }, ()=>{
-          const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
-          window.open(url,'_blank');
-        }, {timeout:10000});
-      } else {
-        const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}`;
-        window.open(url,'_blank');
-      }
-    });
-  }
-}
-
-/* ---------------- Admin Page ---------------- */
-async function initAdminPage(){
-  const dishContainer = document.getElementById('dish-list');
-  const todayListEl = document.getElementById('today-dishes');
-  const addForm = document.getElementById('add-dish-form');
-  const saveMenuBtn = document.getElementById('save-menu');
-  const resetBtn = document.getElementById('reset-selection');
-  const searchInput = document.getElementById('search-dish');
-
-  if(!unsubDishes) unsubDishes = subscribeToDishes((arr)=>{ ALL_DISHES = arr; renderGroups(searchInput ? searchInput.value : ''); renderToday(); });
-  if(!unsubToday) unsubToday = subscribeToToday((items)=>{ TODAY_ITEMS = items; renderToday(); });
-  if(!unsubPosts) unsubPosts = subscribeToPosts((posts)=>{ ALL_POSTS = posts; renderAdminPosts(); });
-
-  const GROUPS = ['Gà','Bò','Cá','Lợn','Rau','Đậu','Trứng','Cơm','Chay','Khác'];
-
-  function renderGroups(filter=''){
-    dishContainer.innerHTML = '';
-    GROUPS.forEach(g=>{
-      const items = ALL_DISHES.filter(d => d.group===g && d.name.toLowerCase().includes(filter.toLowerCase()));
-      if(items.length===0) return;
-      const wrap = document.createElement('div'); wrap.className='accordion card';
-      const head = document.createElement('div'); head.className='group-header'; head.textContent = g + ' ('+items.length+')';
-      const arrow = document.createElement('div'); arrow.textContent = '+';
-      head.appendChild(arrow);
-      const list = document.createElement('div'); list.className='group-list';
-      items.forEach(d=>{
-        const row = document.createElement('div'); row.className='dish-row';
-        const cb = document.createElement('input'); cb.type='checkbox'; cb.checked = !!d.selected;
-        cb.addEventListener('change', async ()=>{ await updateDishRemote(d.id, { selected: cb.checked }); });
-        const name = document.createElement('div'); name.textContent = d.name; name.style.flex='1';
-        const btnImg = document.createElement('button'); btnImg.textContent='Ảnh'; btnImg.className='small-btn';
-        const fileInput = document.createElement('input'); fileInput.type='file'; fileInput.accept='image/*'; fileInput.style.display='none';
-        fileInput.addEventListener('change', async ()=>{ const f = fileInput.files[0]; if(!f) return; const url = await uploadImageFile(f, 'dishes'); await updateDishRemote(d.id, { img: url }); });
-        btnImg.addEventListener('click', ()=> fileInput.click());
-        const btnDel = document.createElement('button'); btnDel.textContent='Xóa'; btnDel.className='small-btn';
-        btnDel.addEventListener('click', async ()=>{ if(!confirm('Xóa món "'+d.name+'" ?')) return; await deleteDishRemote(d.id); });
-        row.appendChild(cb); row.appendChild(name); row.appendChild(btnImg); row.appendChild(fileInput); row.appendChild(btnDel);
-        list.appendChild(row);
-      });
-      head.addEventListener('click', ()=>{ list.classList.toggle('active'); arrow.textContent = list.classList.contains('active') ? '−' : '+'; });
-      wrap.appendChild(head); wrap.appendChild(list);
-      dishContainer.appendChild(wrap);
-    });
-  }
-
-  function renderToday(){
-    todayListEl.innerHTML = '';
-    if(!TODAY_ITEMS || TODAY_ITEMS.length===0){ todayListEl.innerHTML = '<li class="text-muted">Chưa có món được chọn.</li>'; return; }
-    TODAY_ITEMS.forEach((d,i)=>{
-      const li = document.createElement('li');
-      li.textContent = (i+1) + '. ' + d.name;
-      const rem = document.createElement('button'); rem.textContent='Bỏ'; rem.className='small-btn'; rem.style.marginLeft='8px';
-      rem.addEventListener('click', async ()=> { await updateDishRemote(d.id, { selected: false }); });
-      li.appendChild(rem);
-      todayListEl.appendChild(li);
-    });
-  }
-
-  addForm.addEventListener('submit', async (e)=>{ 
-    e.preventDefault(); 
-    const name = document.getElementById('dish-name').value.trim(); 
-    const group = document.getElementById('dish-group').value; 
-    const file = document.getElementById('dish-img').files[0]; 
-    if(!name){ alert('Nhập tên món'); return; } 
-    let imgUrl = ''; 
-    if(file) imgUrl = await uploadImageFile(file, 'dishes'); 
-    await addDishRemote({ name, group, img: imgUrl, selected: false }); 
-    addForm.reset(); 
-    alert('Đã thêm món'); 
-  });
-
-  saveMenuBtn.addEventListener('click', async ()=>{ 
-    const items = ALL_DISHES.filter(d=>d.selected).map(d=>({ id:d.id, name:d.name, group:d.group, img:d.img || '' })); 
-    await saveTodayMenuRemote(items); 
-    alert('Đã lưu thực đơn hôm nay!'); 
-  });
-
-  resetBtn.addEventListener('click', async ()=>{ 
-    if(!confirm('Bỏ chọn tất cả?')) return; 
-    const updates = ALL_DISHES.map(d => updateDishRemote(d.id, { selected: false }).catch(()=>{})); 
-    await Promise.all(updates); 
-    alert('Đã bỏ chọn tất cả.'); 
-  });
-
-  searchInput.addEventListener('input', (e)=> renderGroups(e.target.value));
-
-  /* Admin posts */
-  const addPostForm = document.getElementById('add-post-form');
-  const adminPostList = document.getElementById('admin-posts');
-
-  function renderAdminPosts(){
-    adminPostList.innerHTML = '';
-    if(!ALL_POSTS || ALL_POSTS.length===0){ adminPostList.innerHTML = '<div class="text-muted">Chưa có bài viết.</div>'; return; }
-    ALL_POSTS.forEach(p=>{
-      const div = document.createElement('div'); div.className='card'; div.style.padding='10px'; div.style.marginBottom='8px';
-      const h = document.createElement('h4'); h.textContent = p.title;
-      const time = document.createElement('div'); time.className='text-muted'; time.textContent = new Date(p.date).toLocaleString();
-      const para = document.createElement('p'); para.textContent = p.content;
-      const del = document.createElement('button'); del.textContent='Xóa'; del.className='small-btn';
-      del.addEventListener('click', async ()=>{ if(confirm('Xóa bài viết này?')) await deletePostRemote(p.id); });
-      div.appendChild(h); div.appendChild(time);
-      if(p.img){ const im = document.createElement('img'); im.src = p.img; im.style.width='100%'; im.style.maxHeight='160px'; im.style.objectFit='cover'; im.style.borderRadius='8px'; div.appendChild(im); }
-      div.appendChild(para); div.appendChild(del);
-      adminPostList.appendChild(div);
-    });
-  }
-
-  addPostForm.addEventListener('submit', async (e)=>{ 
-    e.preventDefault(); 
-    const title = document.getElementById('post-title').value.trim(); 
-    const content = document.getElementById('post-content').value.trim(); 
-    const file = document.getElementById('post-img').files[0]; 
-    if(!title || !content){ alert('Nhập đầy đủ tiêu đề và nội dung'); return; } 
-    let imgUrl = ''; 
-    if(file) imgUrl = await uploadImageFile(file, 'posts'); 
-    await addPostRemote({ title, content, img: imgUrl, date: new Date().toISOString() }); 
-    addPostForm.reset(); 
-    alert('Đã đăng bài!'); 
-  });
-
-  renderGroups('');
-  renderToday();
-  renderAdminPosts();
-}
-
-/* ---------------- Import 66 món default ---------------- */
-function setupImportButton(){
-  const btn = document.getElementById('import-defaults');
-  const status = document.getElementById('import-status');
-  if(!btn) return;
-
-  const DEFAULT_ITEMS = [
-    // Nhóm Gà (10)
-    {name:'Ức gà luộc', group:'Gà'},
-    {name:'Đùi gà xào sả ớt', group:'Gà'},
-    {name:'Gà nướng (đùi + má đùi)', group:'Gà'},
-    {name:'Gà luộc (đùi + má đùi)', group:'Gà'},
-    {name:'Ức gà xào ớt xanh đỏ', group:'Gà'},
-    {name:'Gà xào nấm', group:'Gà'},
-    {name:'Gà khô gừng nghệ', group:'Gà'},
-    {name:'Gà xào dứa', group:'Gà'},
-    {name:'Ức gà quấn lá lốt', group:'Gà'},
-    {name:'Mọc gà nấm hương', group:'Gà'},
-    // Nhóm Bò (6)
-    {name:'Bò xào nấm đùi gà', group:'Bò'},
-    {name:'Bò xào nấm hải sản', group:'Bò'},
-    {name:'Bò xào hoa thiên lý', group:'Bò'},
-    {name:'Bò xào giá', group:'Bò'},
-    {name:'Bò kho hoa quả', group:'Bò'},
-    {name:'Bò xào nấm hương tươi', group:'Bò'},
-    // Nhóm Tôm (3)
-    {name:'Tôm hấp', group:'Tôm'},
-    {name:'Tôm rang ba chỉ', group:'Tôm'},
-    {name:'Tôm rim', group:'Tôm'},
-    // Nhóm Cá (8)
-    {name:'Cá hấp', group:'Cá'},
-    {name:'Cá chiên', group:'Cá'},
-    {name:'Cá nướng', group:'Cá'},
-    {name:'Cá sông chao giòn', group:'Cá'},
-    {name:'Cá thu sốt cà chua', group:'Cá'},
-    {name:'Cá thu om tiêu', group:'Cá'},
-    {name:'Cá basa kho tiêu', group:'Cá'},
-    {name:'Cá kho dưa', group:'Cá'},
-    // Nhóm Thịt Lợn (7)
-    {name:'Thịt băm rang', group:'Lợn'},
-    {name:'Thịt ba chỉ rang tôm', group:'Lợn'},
-    {name:'Thịt lợn kho dừa', group:'Lợn'},
-    {name:'Thịt lợn om mắc mật', group:'Lợn'},
-    {name:'Thịt lợn luộc', group:'Lợn'},
-    {name:'Chả sen', group:'Lợn'},
-    {name:'Chả lá lốt', group:'Lợn'},
-    // Nhóm Rau (16)
-    {name:'Súp lơ luộc', group:'Rau'},
-    {name:'Bí xanh luộc', group:'Rau'},
-    {name:'Đỗ cô ve luộc', group:'Rau'},
-    {name:'Bắp cải luộc', group:'Rau'},
-    {name:'Cà rốt luộc', group:'Rau'},
-    {name:'Củ dền luộc', group:'Rau'},
-    {name:'Xu hào luộc', group:'Rau'},
-    {name:'Cải chíp luộc', group:'Rau'},
-    {name:'Măng xào', group:'Rau'},
-    {name:'Nấm đùi gà om', group:'Rau'},
-    {name:'Nấm bao tử', group:'Rau'},
-    {name:'Mướp đắng xào', group:'Rau'},
-    {name:'Củ cải xào', group:'Rau'},
-    {name:'Mướp đắng xào trứng', group:'Rau'},
-    {name:'Mướp hương luộc', group:'Rau'},
-    {name:'Mướp hương xào giá đỗ', group:'Rau'},
-    // Nhóm Đậu (3)
-    {name:'Đậu cà chua', group:'Đậu'},
-    {name:'Đậu tẩm hành', group:'Đậu'},
-    {name:'Đậu sống', group:'Đậu'},
-    // Nhóm Trứng (4)
-    {name:'Trứng luộc', group:'Trứng'},
-    {name:'Trứng rán cuốn rong biển', group:'Trứng'},
-    {name:'Trứng rán hành', group:'Trứng'},
-    {name:'Trứng rán', group:'Trứng'},
-    // Nhóm Cơm (3)
-    {name:'Cơm trắng gạo Nhật', group:'Cơm'},
-    {name:'Cơm lứt tổng hợp', group:'Cơm'},
-    {name:'Cơm lứt + hạt dinh dưỡng', group:'Cơm'},
-    // Nhóm Món Chay (6)
-    {name:'Sườn non chay', group:'Chay'},
-    {name:'Gà chay', group:'Chay'},
-    {name:'Bò chay', group:'Chay'},
-    {name:'Tảo xoắn', group:'Chay'},
-    {name:'Lạc rang', group:'Chay'},
-    {name:'Muối vừng', group:'Chay'}
-  ];
-
-  btn.addEventListener('click', async ()=>{
-    if(!confirm('Xác nhận import 66 món mặc định vào Firestore? (sẽ không trùng lặp nếu đã có tên giống)')) return;
-    btn.disabled = true;
-    status.textContent = 'Đang import...';
-    let added = 0, skipped = 0;
-    for(let i=0;i<DEFAULT_ITEMS.length;i++){
-      const it = DEFAULT_ITEMS[i];
-      try{
-        // check existing by exact name
-        const q = await FB.db.collection('dishes').where('name','==', it.name).get();
-        if(!q.empty){ skipped++; continue; }
-        await addDishRemote({ name: it.name, group: it.group, img: '', selected: false });
-        added++;
-        status.textContent = `Đã import ${added} / ${DEFAULT_ITEMS.length} ...`;
-        await new Promise(r=>setTimeout(r,120)); // small throttle so UI updates
-      }catch(err){
-        console.error('Import error for', it.name, err);
-      }
-    }
-    status.textContent = `Hoàn tất — Thêm ${added}, Bỏ qua ${skipped}.`;
-    btn.disabled = false;
-    // After import, UI should update via realtime subscriptions
-    setTimeout(()=>{ if(window.initAdminPage) initAdminPage(); }, 500);
-  });
-}
-
-/* -------------------- global init based on DOM -------------------- */
-document.addEventListener('DOMContentLoaded', ()=>{
-  if(document.getElementById('menu-list')) initMenuPage();
-  if(document.getElementById('blog-list')) initBlogPage();
-  if(document.getElementById('contact-map')) initContactPage();
-  // initAdminPage called after password prompt in admin.html
+  dishes.push({id, group, name, img: imgUrl, selected:false});
+  saveToLocal(dishes);
+  document.getElementById('newName').value=''; fileInput.value='';
+  renderGroups();
 });
+
+/* Cloudinary unsigned upload (file object) */
+async function uploadToCloudinary(file){
+  if(!UPLOAD_PRESET || !CLOUD_NAME) throw new Error('Cloudinary config thiếu');
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  const r = await fetch(CLOUD_UPLOAD_URL, { method:'POST', body: fd });
+  if(!r.ok) throw new Error('Cloudinary upload failed: ' + r.status);
+  return r.json();
+}
+
+/* helper to upload remote URL (test console) */
+async function uploadRemoteUrlToCloudinary(url){
+  // helper for testing in console: passes remote url to cloudinary
+  const fd = new FormData();
+  fd.append('file', url);
+  fd.append('upload_preset', UPLOAD_PRESET);
+  const r = await fetch(CLOUD_UPLOAD_URL, { method:'POST', body: fd });
+  return r.json();
+}
+
+/* open image editor dialog (quick prompt) */
+function openImageEditor(dishId){
+  const dish = dishes.find(x=>x.id===dishId);
+  if(!dish) return;
+  const choice = prompt(`Upload URL ảnh (1) hoặc nhập "file" để chọn file từ máy\nTên món: ${dish.name}\n\nNhập "file" để upload từ máy, hoặc dán 1 url ảnh:`);
+  if(!choice) return;
+  if(choice.toLowerCase()==='file'){
+    // open hidden file input
+    const f = document.createElement('input'); f.type='file'; f.accept='image/*';
+    f.addEventListener('change', async ()=> {
+      if(!f.files[0]) return;
+      try{
+        const res = await uploadToCloudinary(f.files[0]);
+        dish.img = res.secure_url;
+        saveToLocal(dishes);
+        renderGroups();
+        renderSelectedList();
+        alert('Upload ảnh thành công');
+      }catch(e){ console.error(e); alert('Upload lỗi'); }
+    });
+    f.click();
+  } else {
+    // assume URL
+    dish.img = choice.trim();
+    saveToLocal(dishes);
+    renderGroups();
+    renderSelectedList();
+    alert('Đã cập nhật ảnh từ URL');
+  }
+}
+
+/* ========== import default 66 ========== */
+document.getElementById('import-default').addEventListener('click', ()=>{
+  if(!confirm('Import 66 món mặc định vào danh sách (sẽ thêm nếu chưa có)?')) return;
+  // merge but do not duplicate by name (keeps old ids)
+  DEFAULT_DISHES.forEach(d=>{
+    if(!dishes.some(x=>x.name===d.name && x.group===d.group)){
+      dishes.push({...d});
+    }
+  });
+  saveToLocal(dishes);
+  renderGroups(); renderSelectedList();
+  alert('Hoàn tất import. Nếu muốn thêm ảnh cho từng món, nhấn "Ảnh" hoặc sử dụng chức năng upload.');
+});
+
+/* reset -> default */
+document.getElementById('resetDefault').addEventListener('click', ()=>{
+  if(!confirm('Reset về danh sách 66 món mặc định (sẽ ghi đè dữ liệu hiện tại)?')) return;
+  dishes = DEFAULT_DISHES.slice();
+  saveToLocal(dishes);
+  renderGroups(); renderSelectedList();
+});
+
+/* ========== Blog publish ========== */
+document.getElementById('publishPost').addEventListener('click', async ()=>{
+  const title = document.getElementById('postTitle').value.trim();
+  const content = document.getElementById('postContent').value.trim();
+  const file = document.getElementById('postImage').files[0];
+  if(!title || !content){ alert('Nhập tiêu đề và nội dung'); return; }
+  let imgUrl = '';
+  if(file){
+    try{
+      const res = await uploadToCloudinary(file);
+      imgUrl = res.secure_url;
+    }catch(e){
+      console.error(e); alert('Upload ảnh bài viết lỗi'); 
+    }
+  }
+  const post = { id:'p'+Date.now(), title, content, img: imgUrl, date: new Date().toISOString() };
+  posts.unshift(post);
+  savePosts(posts);
+  document.getElementById('postTitle').value=''; document.getElementById('postContent').value=''; document.getElementById('postImage').value='';
+  renderPosts();
+  alert('Đã đăng bài (lưu local). Nếu muốn sync lên server/Firestore, bật cấu hình Firebase trong admin.html');
+});
+function renderPosts(){
+  const el = document.getElementById('recentPosts');
+  if(posts.length===0){ el.textContent='Chưa có bài viết.'; return; }
+  el.innerHTML = posts.slice(0,5).map(p=>`<div style="margin-bottom:8px"><strong>${p.title}</strong><div class="small">${(new Date(p.date)).toLocaleString()}</div></div>`).join('');
+}
+
+/* ========== selection helpers ========== */
+function renderSelectedFromTodaySaved(){
+  const saved = loadToday();
+  dishes.forEach(d=> d.selected = saved.includes(d.id));
+}
+
+/* ========== init ========== */
+function init(){
+  renderSelectedFromTodaySaved();
+  renderGroups();
+  renderSelectedList();
+  renderPosts();
+}
+init();
+
+/* ========== OPTIONAL: expose helper for console testing ========== */
+window._pn = {
+  dishes,
+  saveToLocal,
+  uploadRemoteUrlToCloudinary,
+  CLOUD_UPLOAD_URL,
+  CLOUD_NAME,
+  UPLOAD_PRESET
+};
