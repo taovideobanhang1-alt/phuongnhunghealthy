@@ -1,118 +1,154 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quản trị — Phuong Nhung Healthy Food</title>
-  <meta name="description" content="Trang quản trị Phuong Nhung Healthy Food - quản lý thực đơn và blog.">
-  <link rel="stylesheet" href="styles.css">
-  <!-- Firebase CDN (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="firebase-api.js"></script>
+  <style>
+    /* ---------- Basic clean styles (keeps look like current theme) ---------- */
+    :root{
+      --green:#2f8b57;
+      --light:#f6fcf7;
+      --accent:#f7c948;
+      --card:#ffffff;
+      --muted:#6b6b6b;
+      --radius:12px;
+      font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+    }
+    body{background:linear-gradient(#f5fbf7,#f0faf4);margin:0;color:#0b2b17}
+    header{
+      background:linear-gradient(90deg,#dff7e6,#e9f8ec);
+      padding:14px 22px;display:flex;align-items:center;gap:16px;
+      box-shadow:0 1px 0 rgba(0,0,0,.04)
+    }
+    .logo{width:44px;height:44px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    header h1{margin:0;font-size:18px;color:#0b3b24}
+    nav{margin-left:auto}
+    nav a{margin-left:12px;text-decoration:none;color:#0b3b24;background:var(--accent);padding:8px 12px;border-radius:8px;font-weight:600}
+    .wrap{max-width:1100px;margin:28px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:22px}
+    .card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:0 6px 18px rgba(15,30,20,.06)}
+    h2{margin-top:0}
+    /* --- admin left: groups & add form --- */
+    .search{display:none} /* theo yêu cầu: ẩn tìm kiếm */
+    .groups{margin-top:12px}
+    .group-row{margin-bottom:8px;border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;background:#f7fff8}
+    .group-row .gname{font-weight:600;color:var(--green)}
+    .group-row button{background:transparent;border:0;color:var(--green);cursor:pointer}
+    .add-box{margin-top:18px;padding:12px;border-radius:10px;background:#fff;box-shadow:0 2px 10px rgba(10,20,10,.03)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="text"], select, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e9efe9;background:#fbfdfb}
+    .row{display:flex;gap:8px;align-items:center}
+    .btn{display:inline-block;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn.green{background:var(--green);color:#fff}
+    .btn.warn{background:var(--accent);color:#000}
+    .btn.red{background:#c94a4a;color:#fff}
+    .dish-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#fff;margin-bottom:8px;border:1px solid #f0f6f0}
+    .dish-left{display:flex;gap:12px;align-items:center}
+    .dish-left img{width:56px;height:56px;object-fit:cover;border-radius:6px;background:#f4f7f4}
+    .dish-meta{font-weight:600}
+    .small{font-size:13px;color:var(--muted)}
+    .controls button{margin-left:8px}
+    .selected-list{padding:12px;background:#fff;border-radius:10px}
+    .select-count{margin-bottom:10px}
+    .space{height:18px}
+    /* responsive */
+    @media(max-width:980px){.grid{grid-template-columns:1fr;}.wrap{padding:12px}}
+  </style>
 </head>
 <body>
-  <div class="site-wrap">
-    <header class="header">
-      <div class="header-inner">
-        <a class="brand" href="index.html"><div class="logo">PN</div><div class="text">Phuong Nhung <span class="accent">Healthy</span> Food</div></a>
-        <nav class="nav">
-          <a href="index.html">Trang chủ</a>
-          <a href="menu.html">Thực đơn</a>
-          <a href="blog.html">Blog</a>
-          <a href="contact.html">Liên hệ</a>
-          <a href="admin.html" class="active">Quản trị</a>
-        </nav>
-      </div>
-    </header>
+  <header>
+    <div class="logo">PN</div>
+    <div>
+      <h1>Phuong Nhung <span style="color:var(--accent);font-weight:700">Healthy</span> Food — Trang Quản trị</h1>
+      <div class="small">Quản lý Món (Accordion) & Quản trị Blog — (ẩn public nếu chưa đăng nhập)</div>
+    </div>
+    <nav><a href="index.html" target="_blank">Xem trang</a></nav>
+  </header>
 
-    <main class="content container">
-      <div id="admin-locked" class="card">
-        <h2>Trang quản trị</h2>
-        <p class="text-muted">Nhập mật khẩu để tiếp tục.</p>
-      </div>
-
-      <div id="admin-layout" class="card" style="display:none">
-        <h1>Trang quản trị</h1>
-
-        <!-- IMPORT BUTTON (top) -->
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
-          <button id="import-defaults" class="btn">📥 Import 66 món mặc định</button>
-          <div id="import-status" style="font-weight:600;color:#174D2F"></div>
+  <main class="wrap">
+    <div class="grid">
+      <!-- left -->
+      <section class="card">
+        <div style="display:flex;align-items:center;gap:12px;justify-content:space-between">
+          <h2>Quản lý Món (Accordion)</h2>
+          <div>
+            <button id="import-default" class="btn" title="Import 66 món mặc định">📥 Import 66 món mặc định</button>
+          </div>
         </div>
 
-        <div class="admin-grid" style="margin-top:12px">
-          <div>
-            <div class="section-title"><h2>Quản lý Món (Accordion)</h2></div>
-            <div style="margin-bottom:8px;"><input id="search-dish" class="input" placeholder="Tìm món..."></div>
-            <div id="dish-list" style="margin-bottom:12px"></div>
+        <!-- search hidden by request -->
+        <div class="search" style="margin-top:10px">
+          <input id="search" placeholder="Tìm món..." />
+        </div>
 
-            <div class="card" style="margin-top:10px">
-              <h3>➕ Thêm món mới</h3>
-              <form id="add-dish-form">
-                <div class="form-row">
-                  <input id="dish-name" class="input" placeholder="Tên món" required>
-                  <select id="dish-group" class="input">
-                    <option>Gà</option><option>Bò</option><option>Cá</option><option>Lợn</option><option>Rau</option><option>Đậu</option><option>Trứng</option><option>Cơm</option><option>Chay</option><option>Khác</option>
-                  </select>
-                </div>
-                <div style="margin-top:8px">
-                  <input id="dish-img" class="input file" type="file" accept="image/*">
-                </div>
-                <div style="margin-top:8px"><button class="btn" type="submit">Thêm món</button></div>
-              </form>
-            </div>
+        <div class="groups" id="groupsContainer"></div>
+
+        <div class="add-box">
+          <h3 style="margin:4px 0">➕ Thêm món mới</h3>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="newName" placeholder="Tên món" />
+            <select id="newGroup">
+              <option>Gà</option><option>Bò</option><option>Tôm</option><option>Cá</option><option>Thịt Lợn</option><option>Rau</option><option>Đậu</option><option>Trứng</option><option>Cơm</option><option>Món Chay</option>
+            </select>
           </div>
+          <div style="margin-bottom:8px">
+            <input id="fileInput" type="file" accept="image/*"/>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="addDishBtn" class="btn green">Thêm món</button>
+            <button id="resetDefault" class="btn" title="Reset về danh sách ban đầu">Reset</button>
+          </div>
+        </div>
+      </section>
 
-          <div>
-            <div class="card">
-              <h3>🍱 Món hôm nay (Danh sách)</h3>
-              <ol id="today-dishes" style="padding-left:18px"></ol>
-              <div style="display:flex;gap:8px;margin-top:12px">
-                <button id="save-menu" class="btn">💾 Lưu Menu Hôm Nay</button>
-                <button id="reset-selection" class="btn secondary">Bỏ chọn tất cả</button>
-              </div>
-            </div>
-
-            <div class="card" style="margin-top:12px">
-              <h3>📝 Quản trị Blog</h3>
-              <form id="add-post-form">
-                <div style="margin-bottom:8px"><input id="post-title" class="input" placeholder="Tiêu đề" required></div>
-                <div style="margin-bottom:8px"><textarea id="post-content" class="input" rows="4" placeholder="Nội dung" required></textarea></div>
-                <div style="margin-bottom:8px"><input id="post-img" class="input file" type="file" accept="image/*"></div>
-                <div><button class="btn" type="submit">Đăng bài</button></div>
-              </form>
-              <h4 style="margin-top:12px">Bài viết gần đây</h4>
-              <div id="admin-posts" style="margin-top:8px"></div>
+      <!-- right -->
+      <aside>
+        <div class="card" style="margin-bottom:18px">
+          <h3>📋 Món hôm nay (Danh sách)</h3>
+          <div class="selected-list" id="todayList">
+            <div class="select-count">1. Chưa có món được chọn.</div>
+            <div style="display:flex;gap:8px">
+              <button id="saveMenu" class="btn green">💾 Lưu Menu Hôm Nay</button>
+              <button id="clearSelection" class="btn red">Bỏ chọn tất cả</button>
             </div>
           </div>
         </div>
-      </div>
-    </main>
 
-    <footer class="footer">
-      <div class="footer-inner">
-        <div><strong>Phuong Nhung Healthy Food</strong><br><small class="text-muted">© 2025</small></div>
-        <div>Giờ mở cửa: 10:00 - 19:30 • <a href="tel:+84902032188">0902.032.188</a></div>
-      </div>
-    </footer>
-  </div>
-
-  <script>
-    // prompt then show admin layout (unchanged)
-    document.addEventListener('DOMContentLoaded', ()=>{
-      const pwd = prompt('Nhập mật khẩu quản trị:');
-      if(pwd === '123'){
-        document.getElementById('admin-locked').style.display='none';
-        document.getElementById('admin-layout').style.display='block';
-        // small delay to ensure firebase-init loaded
-        setTimeout(()=>{ if(window.initAdminPage) initAdminPage(); if(window.setupImportButton) setupImportButton(); }, 250);
-      } else { alert('Sai mật khẩu'); location.href='index.html'; }
-    });
-  </script>
+        <div class="card">
+          <h3>📝 Quản trị Blog</h3>
+          <label>Tiêu đề</label>
+          <input id="postTitle" placeholder="Tiêu đề" />
+          <label>Nội dung</label>
+          <textarea id="postContent" rows="5"></textarea>
+          <div style="margin-top:8px">
+            <input id="postImage" type="file" accept="image/*"/>
+          </div>
+          <div style="margin-top:10px">
+            <button id="publishPost" class="btn green">Đăng bài</button>
+          </div>
+          <div style="margin-top:12px;font-weight:600">Bài viết gần đây</div>
+          <div id="recentPosts" class="small" style="margin-top:8px">Chưa có bài viết.</div>
+        </div>
+      </aside>
+    </div>
+  </main>
 
   <script src="script.js"></script>
+
+  <!-- ====== OPTIONAL: Firebase support (uncomment + paste firebaseConfig if you want Firestore sync) ======
+  <script type="module">
+    // If you want Firestore sync, uncomment this block and paste your firebaseConfig object.
+    // Then host this page with https (Firestore web rules require https).
+    /*
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window.__FIRESTORE = { db, setDoc, getDoc };
+    */
+  </script>
+  ========================================================================= -->
 </body>
 </html>
